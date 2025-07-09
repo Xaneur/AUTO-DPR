@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="en"><meta charset="utf-8">
+<title>DPR Launcher</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;
+     max-width:620px;margin:8vh auto;padding:2rem;border:1px solid #ccc;
+     border-radius:12px}button{padding:.6rem 1.2rem;font-size:1rem;border:none;
+     border-radius:6px;cursor:pointer}
+.copy{cursor:pointer;color:#06c;text-decoration:underline}
+</style>
+<h2>✅ Your Streamlit App is Live</h2>
+<p><strong>Local&nbsp;URL:</strong> <a id="local" href="#" target="_blank"></a></p>
+<p><strong>Public&nbsp;URL:</strong> <a id="tunnel" href="#" target="_blank"></a></p>
+<p><strong>Password:</strong> <span id="pwd" class="copy" onclick="cp(this)"></span></p>
+<button onclick="shutdown()">🚫 Stop Everything</button>
+<script>
+const local = location.origin.replace(':7860', ':PORT');
+const pub   = 'https://SUBDOMAIN.loca.lt';
+document.getElementById('local').textContent = local;
+document.getElementById('local').href = local;
+document.getElementById('tunnel').textContent = pub;
+document.getElementById('tunnel').href = pub;
+document.getElementById('pwd').textContent = 'TUNPWD';
+
+function shutdown(){
+  fetch('/shutdown',{method:'POST'}).then(_=>{
+    document.body.innerHTML='<h2>🛑 Shutting Down…</h2>';
+  }).catch(()=>alert('Could not shut down.'));
+}
+function cp(el){
+  navigator.clipboard.writeText(el.textContent)
+    .then(()=> alert('Password copied'));
+}
+</script></html>
