@@ -10,7 +10,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path in ("/", "/index.html"):
             html = HTML_FILE.read_text("utf‑8")
-            html = (html.replace(":PORT", os.getenv("APP_PORT", ""))
+            html = (html.replace(":PORT", f':{os.getenv("APP_PORT", "")}')
                          .replace("SUBDOMAIN", os.getenv("SUBDOMAIN", ""))
                          .replace("TUNPWD", os.getenv("LT_PASSWORD", "")))
             self.send_response(200)
