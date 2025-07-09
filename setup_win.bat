@@ -414,99 +414,108 @@ echo     ^<meta name="viewport" content="width=device-width, initial-scale=1.0"^
 echo     ^<title^>Streamlit Dashboard^</title^>
 echo     ^<style^>
 echo         body {
-echo             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+echo             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 echo             margin: 0;
 echo             padding: 20px;
-echo             background: linear-gradient^(135deg, #667eea 0%%, #764ba2 100%%^);
-echo             color: white;
+echo             background: #10121b;
+echo             color: #f5f5f5;
 echo             min-height: 100vh;
 echo         }
 echo         .container {
-echo             max-width: 800px;
+echo             max-width: 850px;
 echo             margin: 0 auto;
-echo             background: rgba^(255, 255, 255, 0.1^);
-echo             padding: 30px;
-echo             border-radius: 15px;
-echo             box-shadow: 0 8px 32px rgba^(0, 0, 0, 0.3^);
-echo             backdrop-filter: blur^(10px^);
+echo             background: #1c1f2b;
+echo             padding: 30px 40px;
+echo             border-radius: 16px;
+echo             box-shadow: 0 8px 20px rgba^(0, 0, 0, 0.5^);
 echo         }
 echo         h1 {
 echo             text-align: center;
 echo             margin-bottom: 30px;
-echo             font-size: 2.5em;
-echo             text-shadow: 2px 2px 4px rgba^(0, 0, 0, 0.5^);
+echo             font-size: 2.7em;
+echo             color: #ffffff;
+echo             text-shadow: 0 2px 6px rgba^(0, 0, 0, 0.4^);
+echo         }
+echo         .status {
+echo             text-align: center;
+echo             font-size: 1.2em;
+echo             margin-bottom: 30px;
+echo             color: #4caf50;
+echo             font-weight: bold;
 echo         }
 echo         .info-grid {
 echo             display: grid;
 echo             grid-template-columns: repeat^(auto-fit, minmax^(300px, 1fr^)^);
 echo             gap: 20px;
-echo             margin-bottom: 30px;
+echo             margin-bottom: 40px;
 echo         }
 echo         .info-card {
-echo             background: rgba^(255, 255, 255, 0.1^);
+echo             background: #2a2d3c;
 echo             padding: 20px;
-echo             border-radius: 10px;
-echo             border: 1px solid rgba^(255, 255, 255, 0.2^);
+echo             border-radius: 12px;
+echo             border: 1px solid #3a3f51;
+echo             box-shadow: inset 0 0 10px rgba^(0, 0, 0, 0.2^);
+echo             transition: background 0.3s ease;
+echo         }
+echo         .info-card:hover {
+echo             background: #323646;
 echo         }
 echo         .info-card h3 {
-echo             margin: 0 0 10px 0;
+echo             margin-top: 0;
 echo             font-size: 1.3em;
+echo             color: #ffd54f;
 echo         }
 echo         .info-card p {
-echo             margin: 5px 0;
-echo             font-size: 1.1em;
+echo             font-size: 1.05em;
+echo             margin: 8px 0;
+echo             color: #dddddd;
 echo         }
 echo         .url-link {
-echo             color: #4CAF50;
+echo             color: #4fc3f7;
 echo             text-decoration: none;
 echo             font-weight: bold;
-echo             word-break: break-all;
+echo             word-break: break-word;
 echo         }
 echo         .url-link:hover {
-echo             color: #45a049;
+echo             color: #03a9f4;
 echo             text-decoration: underline;
 echo         }
 echo         .password {
-echo             background: rgba^(255, 255, 255, 0.2^);
+echo             background: #44485b;
+echo             color: #ffffff;
 echo             padding: 10px;
-echo             border-radius: 5px;
+echo             border-radius: 8px;
 echo             font-family: monospace;
-echo             font-size: 1.2em;
 echo             text-align: center;
-echo             margin: 10px 0;
+echo             font-size: 1.1em;
+echo             margin-top: 10px;
 echo         }
 echo         .button-container {
 echo             text-align: center;
 echo             margin-top: 30px;
 echo         }
 echo         .btn {
-echo             background: linear-gradient^(45deg, #4CAF50, #45a049^);
+echo             background: linear-gradient^(135deg, #00c853, #64dd17^);
 echo             color: white;
-echo             padding: 15px 30px;
-echo             border: none;
-echo             border-radius: 25px;
+echo             padding: 14px 28px;
 echo             font-size: 1.1em;
+echo             border: none;
+echo             border-radius: 30px;
 echo             cursor: pointer;
+echo             margin: 0 12px;
 echo             text-decoration: none;
-echo             display: inline-block;
-echo             margin: 0 10px;
-echo             transition: all 0.3s ease;
-echo             box-shadow: 0 4px 15px rgba^(0, 0, 0, 0.2^);
+echo             box-shadow: 0 4px 15px rgba^(0, 0, 0, 0.3^);
+echo             transition: transform 0.2s ease, box-shadow 0.3s ease;
 echo         }
 echo         .btn:hover {
 echo             transform: translateY^(-2px^);
-echo             box-shadow: 0 6px 20px rgba^(0, 0, 0, 0.3^);
-echo         }
-echo         .status {
-echo             text-align: center;
-echo             margin: 20px 0;
-echo             font-size: 1.2em;
-echo             color: #4CAF50;
+echo             box-shadow: 0 6px 18px rgba^(0, 0, 0, 0.4^);
 echo         }
 echo         .footer {
 echo             text-align: center;
 echo             margin-top: 40px;
 echo             font-size: 0.9em;
+echo             color: #aaaaaa;
 echo             opacity: 0.7;
 echo         }
 echo     ^</style^>
@@ -514,18 +523,15 @@ echo ^</head^>
 echo ^<body^>
 echo     ^<div class="container"^>
 echo         ^<h1^>🚀 Streamlit Dashboard^</h1^>
-echo         
 echo         ^<div class="status"^>
 echo             ✅ All services are running successfully!
 echo         ^</div^>
-echo         
 echo         ^<div class="info-grid"^>
 echo             ^<div class="info-card"^>
 echo                 ^<h3^>🏠 Local Application^</h3^>
 echo                 ^<p^>^<strong^>URL:^</strong^> ^<a href="http://localhost:!STREAMLIT_PORT!" class="url-link" target="_blank"^>http://localhost:!STREAMLIT_PORT!^</a^>^</p^>
 echo                 ^<p^>^<strong^>Status:^</strong^> Running on port !STREAMLIT_PORT!^</p^>
 echo             ^</div^>
-echo             
 echo             ^<div class="info-card"^>
 echo                 ^<h3^>🌐 Public Access^</h3^>
 echo                 ^<p^>^<strong^>URL:^</strong^> ^<a href="https://%SUBDOMAIN%.loca.lt" class="url-link" target="_blank"^>https://%SUBDOMAIN%.loca.lt^</a^>^</p^>
@@ -533,12 +539,10 @@ echo                 ^<p^>^<strong^>Tunnel:^</strong^> LocalTunnel^</p^>
 echo                 ^<p^>^<strong^>Status:^</strong^> !PUBLIC_STATUS!^</p^>
 echo             ^</div^>
 echo         ^</div^>
-echo         
 echo         ^<div class="button-container"^>
 echo             ^<a href="http://localhost:!STREAMLIT_PORT!" class="btn" target="_blank"^>Open Local App^</a^>
 echo             ^<a href="https://%SUBDOMAIN%.loca.lt" class="btn" target="_blank"^>Open Public App^</a^>
 echo         ^</div^>
-echo         
 echo         ^<div class="footer"^>
 echo             ^<p^>Dashboard created on %DATE% at %TIME%^</p^>
 echo             ^<p^>Press Ctrl+C in the terminal to stop all services^</p^>
