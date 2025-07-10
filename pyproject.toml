@@ -29,3 +29,8 @@ dependencies = [
     "streamlit-extras>=0.7.5",
     "watchdog>=6.0.0",
 ]
+
+[tool.uv.workspace]
+members = [
+    "Real-Time-GenAI-Teleprompter",
+]

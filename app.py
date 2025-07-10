@@ -210,18 +210,22 @@ if audio_bytes:
     if st.button("Transcribe This Recording"):
         with st.spinner("Transcribing audio..."):
             try:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-                    tmp_file.write(audio_bytes)
-                    tmp_file_path = tmp_file.name
+                # Create a temporary directory that works cross-platform
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    # Create a temporary file with a proper path for the current OS
+                    temp_file = os.path.join(temp_dir, f"recording_{st.session_state.audio_counter}.wav")
+                    
+                    # Write audio data to the temporary file
+                    with open(temp_file, 'wb') as f:
+                        f.write(audio_bytes)
+                    
+                    # Transcribe the audio file
+                    result = model.transcribe(temp_file)
+                    new_transcription = result['text'].strip()
 
-                result = model.transcribe(tmp_file_path)
-                new_transcription = result['text'].strip()
-
-                if new_transcription:
-                    st.session_state.combined_transcription.append(new_transcription)
-                    st.session_state.audio_counter += 1
-
-                os.unlink(tmp_file_path)
+                    if new_transcription:
+                        st.session_state.combined_transcription.append(new_transcription)
+                        st.session_state.audio_counter += 1
                 st.success("Transcription added.")
                 st.rerun()
 
