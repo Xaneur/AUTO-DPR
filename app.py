@@ -1,12 +1,13 @@
 import streamlit as st
-import whisper
-import tempfile
-import os
+import requests
 from audio_recorder_streamlit import audio_recorder
 from src.main import updated_quantity_in_sheet
 from src.sheet_data_fetch import get_available_sheets
 from utils.logger import get_logger
 from config.configuration import FILE_PATH
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = get_logger(__name__)
 
@@ -115,13 +116,48 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ─── Groq Configuration ─────────────────────────────────────────────
+GROQ_API_KEY = st.sidebar.text_input("Groq API Key", type="password", help="Enter your Groq API key")
+GROQ_MODEL = st.sidebar.selectbox("Groq Model", ["whisper-large-v3", "whisper-large-v3-turbo"], index=1)
 
-# Title is now in the main column
-
-# ─── Load Whisper Model ─────────────────────────────────────────────
-@st.cache_resource
-def load_whisper_model():
-    return whisper.load_model("base")
+# ─── Groq STT Function ──────────────────────────────────────────────
+def transcribe_via_groq_api(audio_bytes):
+    """Transcribe audio using Groq API"""
+    try:
+        if not GROQ_API_KEY:
+            raise Exception("Groq API key is required")
+        
+        # Prepare the file for upload
+        files = {
+            "file": ("audio.wav", audio_bytes, "audio/wav")
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}"
+        }
+        
+        data = {
+            "model": GROQ_MODEL,
+            "response_format": "json"
+        }
+        
+        response = requests.post(
+            "https://api.groq.com/openai/v1/audio/transcriptions",
+            headers=headers,
+            files=files,
+            data=data,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("text", "").strip()
+        else:
+            raise Exception(f"Groq API error: {response.status_code} - {response.text}")
+            
+    except Exception as e:
+        logger.error(f"Groq API transcription error: {str(e)}")
+        raise e
 
 # ─── Session State Initialization ──────────────────────────────────
 if 'combined_transcription' not in st.session_state:
@@ -190,11 +226,13 @@ with st.container():
         # Add some space
         st.markdown("---")
 
-with st.spinner("Loading Whisper model..."):
-    model = load_whisper_model()
+# Load Whisper model only if using local method
+# No local Whisper model needed - using Groq API only
+model = None
 
 # ─── Audio Recording Section ────────────────────────────────────────
 st.subheader("Record Audio")
+st.caption("Using: Groq API")
 
 audio_bytes = audio_recorder(
     recording_color="#000000",
@@ -208,26 +246,17 @@ if audio_bytes:
     st.audio(audio_bytes, format="audio/wav")
 
     if st.button("Transcribe This Recording"):
-        with st.spinner("Transcribing audio..."):
+        with st.spinner("Transcribing audio using Groq API..."):
             try:
-                # Create a temporary directory that works cross-platform
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    # Create a temporary file with a proper path for the current OS
-                    temp_file = os.path.join(temp_dir, f"recording_{st.session_state.audio_counter}.wav")
-                    
-                    # Write audio data to the temporary file
-                    with open(temp_file, 'wb') as f:
-                        f.write(audio_bytes)
-                    
-                    # Transcribe the audio file
-                    result = model.transcribe(temp_file)
-                    new_transcription = result['text'].strip()
+                new_transcription = transcribe_via_groq_api(audio_bytes)
 
-                    if new_transcription:
-                        st.session_state.combined_transcription.append(new_transcription)
-                        st.session_state.audio_counter += 1
-                st.success("Transcription added.")
-                st.rerun()
+                if new_transcription:
+                    st.session_state.combined_transcription.append(new_transcription)
+                    st.session_state.audio_counter += 1
+                    st.success("Transcription added.")
+                    st.rerun()
+                else:
+                    st.warning("No transcription received. Please try again.")
 
             except Exception as e:
                 st.error(f"Error during transcription: {str(e)}")
@@ -286,18 +315,22 @@ if st.session_state.combined_transcription:
 st.markdown("---")
 with st.expander("📋 Instructions"):
     st.markdown("""
+**Setup**
+- Enter your Groq API key in the sidebar
+- Select your preferred Groq model (whisper-large-v3-turbo is recommended for speed)
+
 **Record Audio**
 - Click the mic to start recording
 - Speak and click again to stop
-- Click “Transcribe This Recording” to convert it to text
+- Click "Transcribe This Recording" to convert it to text using Groq API
 
 **Edit Transcription**
 - All your transcribed audio will appear in one editable text box
 - Each transcription is separated by a blank line
 
 **Approve**
-- Click “Approve & Update Sheet” to submit each line separately to the sheet
+- Click "Approve & Update Sheet" to submit each line separately to the sheet
 
 **Reset**
-- “Clear All” wipes current transcriptions
+- "Clear All" wipes current transcriptions
 """)
