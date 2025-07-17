@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import os
 from audio_recorder_streamlit import audio_recorder
 from src.main import updated_quantity_in_sheet
 from src.sheet_data_fetch import get_available_sheets
@@ -116,9 +117,100 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ─── Groq Configuration ─────────────────────────────────────────────
-GROQ_API_KEY = st.sidebar.text_input("Groq API Key", type="password", help="Enter your Groq API key")
+# ─── Sidebar Configuration ────────────────────────────────────────
+st.sidebar.title("Configuration")
+
+# URL Input
+url = st.sidebar.text_input("Server URL", placeholder="https://kind-brooms-brush.loca.lt", 
+                          help="Enter the server URL")
+
+# Name and Location Inputs
+name = st.sidebar.text_input("Your Name", key="user_name", help="Enter your name")
+location = st.sidebar.text_input("Location", key="user_location", help="Enter your site location")
+
+# Save Button
+if st.sidebar.button("Save & Get Credentials"):
+    if not url or not name or not location:
+        st.sidebar.error("Please fill in all fields")
+    else:
+        try:
+            # Remove trailing slash if present
+            url = url.rstrip('/')
+            response = requests.get(f"{url}/get_credentials")
+            if response.status_code == 200:
+                creds = response.json()
+                st.session_state.groq_api_key = creds.get("GROQ_API_KEY")
+                # this AVAILABLE_SHEETS is a list of available sheets names list[str] 
+                st.session_state.available_sheets = creds.get("AVAILABLE_SHEETS")
+                st.session_state.current_url = url
+                st.session_state.credentials_loaded = True
+                st.sidebar.success("Credentials loaded successfully!")
+                # Update the global FILE_PATH with the received xlsx file
+            else:
+                st.sidebar.error(f"Failed to load credentials: {response.status_code} - {response.text}")
+        except Exception as e:
+            st.sidebar.error(f"Error: {str(e)}")
+
+
+
+def update_sheet(transcription:list[str], name:str, location:str, selected_sheet:str):
+    """Update the sheet with the transcription and user details via API"""
+    try:
+        # Get the URL from session state
+        url = st.session_state.get('current_url', '').rstrip('/')
+        if not url:
+            return False, "Server URL not found. Please reconfigure your settings."
+        
+        # Prepare the data for the POST request
+        payload = {
+            "transcription_list": st.session_state.combined_transcription,
+            "sheet_name": selected_sheet,
+            "name": name.strip(),
+            "location": location.strip() if location else ""
+        }
+        
+        # Make the POST request to the server
+        response = requests.post(
+            f"{url}/process",
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            return True, "Sheet updated successfully!"
+        else:
+            error_msg = f"Error from server: {response.status_code} - {response.text}"
+            logger.error(error_msg)
+            return False, error_msg
+            
+    except requests.exceptions.RequestException as e:
+        error_msg = f"Network error: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
+    except Exception as e:
+        error_msg = f"Error updating sheet: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
+    
+# Groq Configuration (will be updated after credentials are loaded)
+GROQ_API_KEY = st.session_state.get("groq_api_key", "")
+available_sheets = st.session_state.get("available_sheets", [])
+
+if not GROQ_API_KEY or not available_sheets:
+    st.sidebar.warning("Please save your configuration to load the required credentials")
+    st.stop()
+
+# Add sheet selection to the sidebar
+selected_sheet = st.sidebar.selectbox(
+    "Select Sheet to Update",
+    options=available_sheets,
+    index=0 if available_sheets else None,
+    help="Select the sheet you want to update with the transcription"
+)
+
 GROQ_MODEL = st.sidebar.selectbox("Groq Model", ["whisper-large-v3", "whisper-large-v3-turbo"], index=1)
+
+
 
 # ─── Groq STT Function ──────────────────────────────────────────────
 def transcribe_via_groq_api(audio_bytes):
@@ -187,23 +279,20 @@ def load_available_sheets():
 # Main content container
 st.title("Update Sheet with AI")
 
-# User information section
-with st.container():
-    st.subheader("User Information")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        name = st.text_input("Your Name", key="user_name", help="Enter your name")
-    with col2:
-        location = st.text_input("Location", key="user_location", help="Enter your site location")
-    
-    st.markdown("---")
+# Check if credentials are loaded
+if not st.session_state.get("credentials_loaded", False):
+    st.warning("Please configure your settings in the sidebar and click 'Save & Get Credentials'")
+    st.stop()
+
+# Display current configuration
+st.info(f"Connected to: {url}")
+st.markdown("---")
 
 # Sheet selection
 with st.container():
     st.subheader("Sheet Selection")
     # Get available sheets
-    available_sheets = load_available_sheets()
+    available_sheets = [ sheet for sheet in st.session_state.available_sheets if sheet.upper() != "LOGS"]
     
     # Sheet selection UI in main area
     if available_sheets[0].startswith("Error:") or available_sheets[0] == "No valid sheets found":
@@ -296,20 +385,26 @@ if st.session_state.combined_transcription:
                     elif not name.strip():
                         st.error("Please enter your name")
                     else:
-                        for transcription in st.session_state.combined_transcription:
-                            updated_quantity_in_sheet(
-                                description=transcription,
-                                sheet_name=st.session_state.selected_sheet,
-                                name=name.strip(),
-                                location=location.strip() if location else ""
-                            )
-                        st.success(f"Successfully updated sheet: {st.session_state.selected_sheet}")
-                        st.session_state.combined_transcription = []
-                        st.session_state.audio_counter = 0
-                        st.rerun()
+                        # Call the update_sheet function
+                        success, message = update_sheet(
+                            st.session_state.combined_transcription,
+                            name,
+                            location,
+                            selected_sheet
+                        )
+                        
+                        if success:
+                            st.success(message)
+                            st.session_state.combined_transcription = []
+                            st.session_state.audio_counter = 0
+                            st.rerun()
+                        else:
+                            st.error(message)
                 except Exception as e:
-                    st.error(f"Error updating sheet: {str(e)}")
-                    logger.error(f"Update Sheet Error: {str(e)}")
+                    error_msg = f"Error updating sheet: {str(e)}"
+                    st.error(error_msg)
+                    logger.error(error_msg)
+
 
 # ─── How to Use ─────────────────────────────────────────────────────
 st.markdown("---")

@@ -98,15 +98,15 @@ def put_logs_in_file(file_path: str, sheet_name="LOGS", description=None,
     wb = openpyxl.load_workbook(file_path)
 
     # Create the LOG sheet on first run and add headers
-    if sheet_name not in wb.sheetnames:
-        ws = wb.create_sheet(sheet_name)
+    if "LOGS" not in wb.sheetnames:
+        ws = wb.create_sheet("LOGS")
         headers = [
-            'Logged_At', 'Name', 'Location', 
+            'Logged_At', 'Updated_Sheet', 'Name', 'Location', 
             'Description', 'Row', 'Column', 'Value'
         ]
         ws.append(headers)
     else:
-        ws = wb[sheet_name]
+        ws = wb["LOGS"]
 
     # Find first empty row (after any header)
     next_row = ws.max_row + 1
@@ -116,12 +116,13 @@ def put_logs_in_file(file_path: str, sheet_name="LOGS", description=None,
 
     # Write the log entry
     ws.cell(row=next_row, column=1, value=datetime.datetime.now())
-    ws.cell(row=next_row, column=2, value=name)
-    ws.cell(row=next_row, column=3, value=location)
-    ws.cell(row=next_row, column=4, value=description)
-    ws.cell(row=next_row, column=5, value=row_index)
-    ws.cell(row=next_row, column=6, value=column_index)
-    ws.cell(row=next_row, column=7, value=value)
+    ws.cell(row=next_row, column=2, value=sheet_name)
+    ws.cell(row=next_row, column=3, value=name)
+    ws.cell(row=next_row, column=4, value=location)
+    ws.cell(row=next_row, column=5, value=description)
+    ws.cell(row=next_row, column=6, value=row_index)
+    ws.cell(row=next_row, column=7, value=column_index)
+    ws.cell(row=next_row, column=8, value=value)
 
     wb.save(file_path)
     logger.info(f"log row {next_row} written successfully")

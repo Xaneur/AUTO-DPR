@@ -7,7 +7,7 @@ import datetime
 
 logger = get_logger(__name__)
 
-def updated_quantity_in_sheet(description: str, sheet_name: str, name: str = None, location: str = None):
+async def updated_quantity_in_sheet(description: str, sheet_name: str, name: str = "User", location: str = "Home"):
     """
     Update the quantity in the specified sheet based on the description.
     
@@ -19,7 +19,7 @@ def updated_quantity_in_sheet(description: str, sheet_name: str, name: str = Non
     """
     try:
         # Get the row and updated quantity from LLM
-        row_index, updated_quantity, date = run(get_llm_result(description))
+        row_index, updated_quantity, date = await get_llm_result(description)
         
         # Get the column for today's date in the specified sheet
         col_index = get_date_column(FILE_PATH, sheet_name, date)
@@ -41,7 +41,7 @@ def updated_quantity_in_sheet(description: str, sheet_name: str, name: str = Non
         # Log the update with additional metadata
         put_logs_in_file(
             file_path=FILE_PATH,
-            sheet_name="LOGS",
+            sheet_name=sheet_name,
             description=description,
             row_index=row_index,
             column_index=col_index,

@@ -651,8 +651,13 @@ dependencies = [
     { name = "pydantic-ai" },
     { name = "pydantic-ai-slim", extra = ["groq"] },
     { name = "pydantic-settings" },
+    { name = "pydub" },
+    { name = "pyqt5" },
+    { name = "python-dateutil" },
     { name = "python-dotenv" },
+    { name = "requests" },
     { name = "sounddevice" },
+    { name = "soundfile" },
     { name = "speechrecognition" },
     { name = "streamlit-extras" },
     { name = "watchdog" },
@@ -668,20 +673,25 @@ requires-dist = [
     { name = "groq", specifier = ">=0.29.0" },
     { name = "mcp", specifier = ">=1.10.1" },
     { name = "numba", specifier = ">=0.61" },
-    { name = "numpy", specifier = "<2.3" },
+    { name = "numpy", specifier = ">=1.24.0" },
     { name = "openai", specifier = ">=1.93.0" },
     { name = "openai-agents", extras = ["viz", "voice"], specifier = ">=0.1.0" },
     { name = "openai-whisper", specifier = ">=20250625" },
-    { name = "openpyxl", specifier = ">=3.1.5" },
+    { name = "openpyxl", specifier = ">=3.1.2" },
     { name = "pandas", specifier = ">=2.3.0" },
     { name = "psutil", specifier = ">=7.0.0" },
-    { name = "pyaudio", specifier = ">=0.2.14" },
+    { name = "pyaudio", specifier = ">=0.2.13" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "pydantic-ai", specifier = ">=0.3.6" },
     { name = "pydantic-ai-slim", extras = ["groq"], specifier = ">=0.3.6" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
-    { name = "python-dotenv", specifier = ">=1.1.1" },
-    { name = "sounddevice", specifier = ">=0.5.2" },
+    { name = "pydub", specifier = ">=0.25.1" },
+    { name = "pyqt5", specifier = ">=5.15.0" },
+    { name = "python-dateutil", specifier = ">=2.8.2" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "requests", specifier = ">=2.31.0" },
+    { name = "sounddevice", specifier = ">=0.4.6" },
+    { name = "soundfile", specifier = ">=0.13.1" },
     { name = "speechrecognition", specifier = ">=3.14.3" },
     { name = "streamlit-extras", specifier = ">=0.7.5" },
     { name = "watchdog", specifier = ">=6.0.0" },
@@ -2606,6 +2616,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pydub"
+version = "0.25.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/9a/e6bca0eed82db26562c73b5076539a4a08d3cffd19c3cc5913a3e61145fd/pydub-0.25.1.tar.gz", hash = "sha256:980a33ce9949cab2a569606b65674d748ecbca4f0796887fd6f46173a7b0d30f", size = 38326, upload-time = "2021-03-10T02:09:54.659Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/53/d78dc063216e62fc55f6b2eebb447f6a4b0a59f55c8406376f76bf959b08/pydub-0.25.1-py2.py3-none-any.whl", hash = "sha256:65617e33033874b59d87db603aa1ed450633288aefead953b30bded59cb599a6", size = 32327, upload-time = "2021-03-10T02:09:53.503Z" },
+]
+
+[[package]]
 name = "pygments"
 version = "2.19.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2656,6 +2675,53 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/bb/22/f1129e69d94ffff626bdb5c835506b3a5b4f3d070f17ea295e12c2c6f60f/pyparsing-3.2.3.tar.gz", hash = "sha256:b9c13f1ab8b3b542f72e28f634bad4de758ab3ce4546e4301970ad6fa77c38be", size = 1088608, upload-time = "2025-03-25T05:01:28.114Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/05/e7/df2285f3d08fee213f2d041540fa4fc9ca6c2d44cf36d3a035bf2a8d2bcc/pyparsing-3.2.3-py3-none-any.whl", hash = "sha256:a749938e02d6fd0b59b356ca504a24982314bb090c383e3cf201c95ef7e2bfcf", size = 111120, upload-time = "2025-03-25T05:01:24.908Z" },
+]
+
+[[package]]
+name = "pyqt5"
+version = "5.15.11"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyqt5-qt5" },
+    { name = "pyqt5-sip" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/07/c9ed0bd428df6f87183fca565a79fee19fa7c88c7f00a7f011ab4379e77a/PyQt5-5.15.11.tar.gz", hash = "sha256:fda45743ebb4a27b4b1a51c6d8ef455c4c1b5d610c90d2934c7802b5c1557c52", size = 3216775, upload-time = "2024-07-19T08:39:57.756Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/11/64/42ec1b0bd72d87f87bde6ceb6869f444d91a2d601f2e67cd05febc0346a1/PyQt5-5.15.11-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:c8b03dd9380bb13c804f0bdb0f4956067f281785b5e12303d529f0462f9afdc2", size = 6579776, upload-time = "2024-07-19T08:39:19.775Z" },
+    { url = "https://files.pythonhosted.org/packages/49/f5/3fb696f4683ea45d68b7e77302eff173493ac81e43d63adb60fa760b9f91/PyQt5-5.15.11-cp38-abi3-macosx_11_0_x86_64.whl", hash = "sha256:6cd75628f6e732b1ffcfe709ab833a0716c0445d7aec8046a48d5843352becb6", size = 7016415, upload-time = "2024-07-19T08:39:32.977Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/8c/4065950f9d013c4b2e588fe33cf04e564c2322842d84dbcbce5ba1dc28b0/PyQt5-5.15.11-cp38-abi3-manylinux_2_17_x86_64.whl", hash = "sha256:cd672a6738d1ae33ef7d9efa8e6cb0a1525ecf53ec86da80a9e1b6ec38c8d0f1", size = 8188103, upload-time = "2024-07-19T08:39:40.561Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/f0/ae5a5b4f9b826b29ea4be841b2f2d951bcf5ae1d802f3732b145b57c5355/PyQt5-5.15.11-cp38-abi3-win32.whl", hash = "sha256:76be0322ceda5deecd1708a8d628e698089a1cea80d1a49d242a6d579a40babd", size = 5433308, upload-time = "2024-07-19T08:39:46.932Z" },
+    { url = "https://files.pythonhosted.org/packages/56/d5/68eb9f3d19ce65df01b6c7b7a577ad3bbc9ab3a5dd3491a4756e71838ec9/PyQt5-5.15.11-cp38-abi3-win_amd64.whl", hash = "sha256:bdde598a3bb95022131a5c9ea62e0a96bd6fb28932cc1619fd7ba211531b7517", size = 6865864, upload-time = "2024-07-19T08:39:53.572Z" },
+]
+
+[[package]]
+name = "pyqt5-qt5"
+version = "5.15.17"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d3/f9/accb06e76e23fb23053d48cc24fd78dec6ed14cb4d5cbadb0fd4a0c1b02e/PyQt5_Qt5-5.15.17-py3-none-macosx_10_13_x86_64.whl", hash = "sha256:d8b8094108e748b4bbd315737cfed81291d2d228de43278f0b8bd7d2b808d2b9", size = 39972275, upload-time = "2025-05-24T11:15:42.259Z" },
+    { url = "https://files.pythonhosted.org/packages/87/1a/e1601ad6934cc489b8f1e967494f23958465cf1943712f054c5a306e9029/PyQt5_Qt5-5.15.17-py3-none-macosx_11_0_arm64.whl", hash = "sha256:b68628f9b8261156f91d2f72ebc8dfb28697c4b83549245d9a68195bd2d74f0c", size = 37135109, upload-time = "2025-05-24T11:15:59.786Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/e1/13d25a9ff2ac236a264b4603abaa39fa8bb9a7aa430519bb5f545c5b008d/PyQt5_Qt5-5.15.17-py3-none-manylinux2014_x86_64.whl", hash = "sha256:b018f75d1cc61146396fa5af14da1db77c5d6318030e5e366f09ffdf7bd358d8", size = 61112954, upload-time = "2025-05-24T11:16:26.036Z" },
+]
+
+[[package]]
+name = "pyqt5-sip"
+version = "12.17.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/79/086b50414bafa71df494398ad277d72e58229a3d1c1b1c766d12b14c2e6d/pyqt5_sip-12.17.0.tar.gz", hash = "sha256:682dadcdbd2239af9fdc0c0628e2776b820e128bec88b49b8d692fe682f90b4f", size = 104042, upload-time = "2025-02-02T17:13:11.268Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/52/fd/7d6e3deca5ce37413956faf4e933ce6beb87ac0cc7b26d934b5ed998f88a/PyQt5_sip-12.17.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:2c912807dd638644168ea8c7a447bfd9d85a19471b98c2c588c4d2e911c09b0a", size = 122748, upload-time = "2025-02-02T17:12:43.831Z" },
+    { url = "https://files.pythonhosted.org/packages/29/4d/e5981cde03b091fd83a1ef4ef6a4ca99ce6921d61b80c0222fc8eafdc99a/PyQt5_sip-12.17.0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:71514a7d43b44faa1d65a74ad2c5da92c03a251bdc749f009c313f06cceacc9a", size = 276401, upload-time = "2025-02-02T17:12:45.705Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/30/4c282896b1e8841639cf2aca59acf57d8b261ed834ae976c959f25fa4a35/PyQt5_sip-12.17.0-cp311-cp311-win32.whl", hash = "sha256:023466ae96f72fbb8419b44c3f97475de6642fa5632520d0f50fc1a52a3e8200", size = 49091, upload-time = "2025-02-02T17:12:47.688Z" },
+    { url = "https://files.pythonhosted.org/packages/24/c1/50fc7301aa39a50f451fc1b6b219e778c540a823fe9533a57b4793c859fd/PyQt5_sip-12.17.0-cp311-cp311-win_amd64.whl", hash = "sha256:fb565469d08dcb0a427def0c45e722323beb62db79454260482b6948bfd52d47", size = 59036, upload-time = "2025-02-02T17:12:49.535Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/e6/e51367c28d69b5a462f38987f6024e766fd8205f121fe2f4d8ba2a6886b9/PyQt5_sip-12.17.0-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:ea08341c8a5da00c81df0d689ecd4ee47a95e1ecad9e362581c92513f2068005", size = 124650, upload-time = "2025-02-02T17:12:50.595Z" },
+    { url = "https://files.pythonhosted.org/packages/64/3b/e6d1f772b41d8445d6faf86cc9da65910484ebd9f7df83abc5d4955437d0/PyQt5_sip-12.17.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:4a92478d6808040fbe614bb61500fbb3f19f72714b99369ec28d26a7e3494115", size = 281893, upload-time = "2025-02-02T17:12:51.966Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/c5/d17fc2ddb9156a593710c88afd98abcf4055a2224b772f8bec2c6eea879c/PyQt5_sip-12.17.0-cp312-cp312-win32.whl", hash = "sha256:b0ff280b28813e9bfd3a4de99490739fc29b776dc48f1c849caca7239a10fc8b", size = 49438, upload-time = "2025-02-02T17:12:54.426Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/c5/1174988d52c732d07033cf9a5067142b01d76be7731c6394a64d5c3ef65c/PyQt5_sip-12.17.0-cp312-cp312-win_amd64.whl", hash = "sha256:54c31de7706d8a9a8c0fc3ea2c70468aba54b027d4974803f8eace9c22aad41c", size = 58017, upload-time = "2025-02-02T17:12:56.31Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/5d/f234e505af1a85189310521447ebc6052ebb697efded850d0f2b2555f7aa/PyQt5_sip-12.17.0-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:c7a7ff355e369616b6bcb41d45b742327c104b2bf1674ec79b8d67f8f2fa9543", size = 124580, upload-time = "2025-02-02T17:12:58.158Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/cb/3b2050e9644d0021bdf25ddf7e4c3526e1edd0198879e76ba308e5d44faf/PyQt5_sip-12.17.0-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:419b9027e92b0b707632c370cfc6dc1f3b43c6313242fc4db57a537029bd179c", size = 281563, upload-time = "2025-02-02T17:12:59.421Z" },
+    { url = "https://files.pythonhosted.org/packages/51/61/b8ebde7e0b32d0de44c521a0ace31439885b0423d7d45d010a2f7d92808c/PyQt5_sip-12.17.0-cp313-cp313-win32.whl", hash = "sha256:351beab964a19f5671b2a3e816ecf4d3543a99a7e0650f88a947fea251a7589f", size = 49383, upload-time = "2025-02-02T17:13:00.597Z" },
+    { url = "https://files.pythonhosted.org/packages/15/ed/ff94d6b2910e7627380cb1fc9a518ff966e6d78285c8e54c9422b68305db/PyQt5_sip-12.17.0-cp313-cp313-win_amd64.whl", hash = "sha256:672c209d05661fab8e17607c193bf43991d268a1eefbc2c4551fbf30fd8bb2ca", size = 58022, upload-time = "2025-02-02T17:13:01.738Z" },
 ]
 
 [[package]]
@@ -3093,6 +3159,25 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3f/6f/e3dd751face4fcb5be25e8abba22f25d8e6457ebd7e9ed79068b768dc0e5/sounddevice-0.5.2-py3-none-macosx_10_6_x86_64.macosx_10_6_universal2.whl", hash = "sha256:943f27e66037d41435bdd0293454072cdf657b594c9cde63cd01ee3daaac7ab3", size = 108088, upload-time = "2025-05-16T18:12:23.146Z" },
     { url = "https://files.pythonhosted.org/packages/45/0b/bfad79af0b380aa7c0bfe73e4b03e0af45354a48ad62549489bd7696c5b0/sounddevice-0.5.2-py3-none-win32.whl", hash = "sha256:3a113ce614a2c557f14737cb20123ae6298c91fc9301eb014ada0cba6d248c5f", size = 312665, upload-time = "2025-05-16T18:12:24.726Z" },
     { url = "https://files.pythonhosted.org/packages/e1/3e/61d88e6b0a7383127cdc779195cb9d83ebcf11d39bc961de5777e457075e/sounddevice-0.5.2-py3-none-win_amd64.whl", hash = "sha256:e18944b767d2dac3771a7771bdd7ff7d3acd7d334e72c4bedab17d1aed5dbc22", size = 363808, upload-time = "2025-05-16T18:12:26Z" },
+]
+
+[[package]]
+name = "soundfile"
+version = "0.13.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cffi" },
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e1/41/9b873a8c055582859b239be17902a85339bec6a30ad162f98c9b0288a2cc/soundfile-0.13.1.tar.gz", hash = "sha256:b2c68dab1e30297317080a5b43df57e302584c49e2942defdde0acccc53f0e5b", size = 46156, upload-time = "2025-01-25T09:17:04.831Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/64/28/e2a36573ccbcf3d57c00626a21fe51989380636e821b341d36ccca0c1c3a/soundfile-0.13.1-py2.py3-none-any.whl", hash = "sha256:a23c717560da2cf4c7b5ae1142514e0fd82d6bbd9dfc93a50423447142f2c445", size = 25751, upload-time = "2025-01-25T09:16:44.235Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/ab/73e97a5b3cc46bba7ff8650a1504348fa1863a6f9d57d7001c6b67c5f20e/soundfile-0.13.1-py2.py3-none-macosx_10_9_x86_64.whl", hash = "sha256:82dc664d19831933fe59adad199bf3945ad06d84bc111a5b4c0d3089a5b9ec33", size = 1142250, upload-time = "2025-01-25T09:16:47.583Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/e5/58fd1a8d7b26fc113af244f966ee3aecf03cb9293cb935daaddc1e455e18/soundfile-0.13.1-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:743f12c12c4054921e15736c6be09ac26b3b3d603aef6fd69f9dde68748f2593", size = 1101406, upload-time = "2025-01-25T09:16:49.662Z" },
+    { url = "https://files.pythonhosted.org/packages/58/ae/c0e4a53d77cf6e9a04179535766b3321b0b9ced5f70522e4caf9329f0046/soundfile-0.13.1-py2.py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:9c9e855f5a4d06ce4213f31918653ab7de0c5a8d8107cd2427e44b42df547deb", size = 1235729, upload-time = "2025-01-25T09:16:53.018Z" },
+    { url = "https://files.pythonhosted.org/packages/57/5e/70bdd9579b35003a489fc850b5047beeda26328053ebadc1fb60f320f7db/soundfile-0.13.1-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:03267c4e493315294834a0870f31dbb3b28a95561b80b134f0bd3cf2d5f0e618", size = 1313646, upload-time = "2025-01-25T09:16:54.872Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/df/8c11dc4dfceda14e3003bb81a0d0edcaaf0796dd7b4f826ea3e532146bba/soundfile-0.13.1-py2.py3-none-win32.whl", hash = "sha256:c734564fab7c5ddf8e9be5bf70bab68042cd17e9c214c06e365e20d64f9a69d5", size = 899881, upload-time = "2025-01-25T09:16:56.663Z" },
+    { url = "https://files.pythonhosted.org/packages/14/e9/6b761de83277f2f02ded7e7ea6f07828ec78e4b229b80e4ca55dd205b9dc/soundfile-0.13.1-py2.py3-none-win_amd64.whl", hash = "sha256:1e70a05a0626524a69e9f0f4dd2ec174b4e9567f4d8b6c11d38b5c289be36ee9", size = 1019162, upload-time = "2025-01-25T09:16:59.573Z" },
 ]
 
 [[package]]
