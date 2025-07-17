@@ -1,13 +1,16 @@
 import os
 import sys
 import json
+import subprocess
+import threading
 from pathlib import Path
 from dotenv import load_dotenv, set_key
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
                             QWidget, QLabel, QLineEdit, QPushButton, QTabWidget,
                             QTextEdit, QComboBox, QMessageBox, QFileDialog, QStatusBar,
-                            QGroupBox, QFormLayout)
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+                            QGroupBox, QFormLayout, QTextBrowser)
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QProcess, QUrl
+from PyQt5.QtGui import QDesktopServices
 import sounddevice as sd
 import soundfile as sf
 import numpy as np
@@ -370,6 +373,133 @@ class MainTab(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to update sheet: {str(e)}")
             self.parent.statusBar().showMessage(f"Error: {str(e)}")
 
+class ServerTab(QWidget):
+    """Tab for managing server connection and device sharing"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.server_process = None
+        self.tunnel_url = ""
+        self.init_ui()
+    
+    def init_ui(self):
+        layout = QVBoxLayout()
+        
+        # Server Controls
+        control_layout = QHBoxLayout()
+        
+        self.start_btn = QPushButton("🚀 Start Server")
+        self.start_btn.clicked.connect(self.toggle_server)
+        control_layout.addWidget(self.start_btn)
+        
+        self.status_label = QLabel("Status: Stopped")
+        control_layout.addWidget(self.status_label)
+        
+        layout.addLayout(control_layout)
+        
+        # URL Display
+        url_group = QGroupBox("Connection URL")
+        url_layout = QVBoxLayout()
+        
+        self.url_display = QTextBrowser()
+        self.url_display.setOpenExternalLinks(True)
+        self.url_display.setReadOnly(True)
+        self.url_display.setPlaceholderText("Server URL will appear here after starting...")
+        url_layout.addWidget(self.url_display)
+        
+        self.copy_btn = QPushButton("📋 Copy URL")
+        self.copy_btn.clicked.connect(self.copy_url_to_clipboard)
+        self.copy_btn.setEnabled(False)
+        url_layout.addWidget(self.copy_btn)
+        
+        url_group.setLayout(url_layout)
+        layout.addWidget(url_group)
+        
+        # Instructions
+        instructions = QLabel(
+            "1. Click 'Start Server' to begin sharing your device\n"
+            "2. Share the URL above with other devices\n"
+            "3. Use the web interface on other devices to connect"
+        )
+        instructions.setWordWrap(True)
+        layout.addWidget(instructions)
+        
+        layout.addStretch()
+        self.setLayout(layout)
+    
+    def toggle_server(self):
+        if self.server_process is None:
+            self.start_server()
+        else:
+            self.stop_server()
+    
+    def start_server(self):
+        try:
+            # Start the server in a separate process
+            self.server_process = QProcess()
+            self.server_process.setProcessChannelMode(QProcess.MergedChannels)
+            self.server_process.readyReadStandardOutput.connect(self.handle_stdout)
+            self.server_process.finished.connect(self.server_finished)
+            
+            script_path = os.path.join(os.path.dirname(__file__), "..", "server.py")
+            self.server_process.start(sys.executable, [script_path])
+            
+            self.start_btn.setText("🛑 Stop Server")
+            self.status_label.setText("Status: Starting...")
+            self.url_display.clear()
+            self.copy_btn.setEnabled(False)
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to start server: {str(e)}")
+    
+    def stop_server(self):
+        if self.server_process:
+            self.server_process.terminate()
+            self.server_process.waitForFinished()
+            self.server_process = None
+        
+        self.start_btn.setText("🚀 Start Server")
+        self.status_label.setText("Status: Stopped")
+        self.copy_btn.setEnabled(False)
+    
+    def handle_stdout(self):
+        if not self.server_process:
+            return
+            
+        output = bytes(self.server_process.readAllStandardOutput()).decode('utf-8')
+        
+        # Check for localtunnel URL in the output
+        if "your url is:" in output.lower():
+            url = output.split("your url is:", 1)[1].strip()
+            self.tunnel_url = url
+            self.url_display.setPlainText(url)
+            self.status_label.setText("Status: Running")
+            self.copy_btn.setEnabled(True)
+    
+    def server_finished(self, exit_code, exit_status):
+        self.server_process = None
+        self.start_btn.setText("🚀 Start Server")
+        self.status_label.setText("Status: Stopped")
+        self.copy_btn.setEnabled(False)
+        
+        if exit_code != 0:
+            QMessageBox.warning(
+                self, 
+                "Server Stopped", 
+                f"Server process ended unexpectedly with code {exit_code}"
+            )
+    
+    def copy_url_to_clipboard(self):
+        if self.tunnel_url:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(self.tunnel_url)
+            self.parent.statusBar().showMessage("URL copied to clipboard!", 3000)
+    
+    def closeEvent(self, event):
+        self.stop_server()
+        super().closeEvent(event)
+
+
 class DPRWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -383,9 +513,11 @@ class DPRWindow(QMainWindow):
         # Add tabs
         self.main_tab = MainTab(self)
         self.api_key_tab = ApiKeyTab(self)
+        self.server_tab = ServerTab(self)
         
         self.tabs.addTab(self.main_tab, "Main")
         self.tabs.addTab(self.api_key_tab, "API Key Settings")
+        self.tabs.addTab(self.server_tab, "Connect Devices")
         
         # Status bar
         self.statusBar().showMessage("Ready")
