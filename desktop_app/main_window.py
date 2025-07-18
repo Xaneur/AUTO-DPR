@@ -106,6 +106,19 @@ class ApiKeyTab(QWidget):
         
         key_layout.addLayout(key_input_layout)
         
+        # Excel File Selection
+        excel_layout = QHBoxLayout()
+        excel_layout.addWidget(QLabel("Excel File:"))
+        self.excel_path_input = QLineEdit()
+        self.excel_path_input.setReadOnly(True)
+        excel_layout.addWidget(self.excel_path_input)
+        
+        self.browse_btn = QPushButton("Browse...")
+        self.browse_btn.clicked.connect(self.browse_excel_file)
+        excel_layout.addWidget(self.browse_btn)
+        
+        key_layout.addLayout(excel_layout)
+        
         # User Information Section
         user_group = QWidget()
         user_layout = QFormLayout(user_group)
@@ -165,19 +178,45 @@ class ApiKeyTab(QWidget):
             if api_key:
                 self.key_input.setText(api_key)
             
+            # Load Excel file path
+            excel_path = os.getenv("EXCEL_FILE_PATH", "")
+            if excel_path:
+                self.excel_path_input.setText(excel_path)
+            
             # Load user name and location
             self.name_input.setText(os.getenv("USER_NAME", ""))
             self.location_input.setText(os.getenv("USER_LOCATION", ""))
     
+    def browse_excel_file(self):
+        """Open file dialog to select Excel file"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Excel File",
+            "",
+            "Excel Files (*.xlsx *.xls);;All Files (*)"
+        )
+        
+        if file_path:
+            self.excel_path_input.setText(file_path)
+    
     def save_settings(self):
         """Save all settings to .env file"""
         api_key = self.key_input.text().strip()
+        excel_path = self.excel_path_input.text().strip()
         user_name = self.name_input.text().strip()
         user_location = self.location_input.text().strip()
         
         # Validate required fields
         if not api_key:
             QMessageBox.warning(self, "Error", "API key cannot be empty!")
+            return
+            
+        if not excel_path:
+            QMessageBox.warning(self, "Error", "Please select an Excel file!")
+            return
+            
+        if not os.path.isfile(excel_path):
+            QMessageBox.warning(self, "Error", "Selected Excel file does not exist!")
             return
         
         # Create or update .env file
@@ -186,6 +225,7 @@ class ApiKeyTab(QWidget):
         
         # Save all settings
         set_key(self.env_path, "GROQ_API_KEY", api_key)
+        set_key(self.env_path, "EXCEL_FILE_PATH", excel_path)
         set_key(self.env_path, "USER_NAME", user_name)
         set_key(self.env_path, "USER_LOCATION", user_location)
         
