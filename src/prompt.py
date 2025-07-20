@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 def prompt_builder(search_description: str, path: str, sheet_name: str):
     description_list = get_descriptions_with_index(path, sheet_name)
 
-    PROMPT = f"""**REACT FRAMEWORK ANALYSIS**
+    PROMPT = f"""**MANDATORY CONSOLIDATION FRAMEWORK - NO EXCEPTIONS**
 
 **SHEET DATA:**
 {description_list}
@@ -15,9 +15,10 @@ def prompt_builder(search_description: str, path: str, sheet_name: str):
 **SEARCH TEXT:** 
 {search_description}
 
-**INSTRUCTIONS:** Use ReAct methodology - Think step by step, then Act.
+**CRITICAL INSTRUCTION:** 
+You MUST consolidate synonymous terms into single work concepts. NEVER create separate entries for the same physical work activity.
 
-**FEW-SHOT EXAMPLES:**
+**FORCED CONSOLIDATION PROCESS:**
 
 **EXAMPLE 1:**
 Search: "25 kgs structural steel at 05-07-2025"
