@@ -14,26 +14,41 @@ SEARCH:
 
 TASK: Extract and match work items.
 
-STEPS:
-1. Find work items in search text
-2. Match with sheet descriptions (fuzzy matching OK)
-3. Extract quantities (convert to float)
-4. Get sheet indexes for matches
-5. Extract dates (DD-MM-YYYY format)
+RULES:
+1. Only add to `found_descriptions_list` if BOTH description matches a row in sheet AND 
+   a numeric quantity is explicitly given.
+2. If no quantity is present, or the description is too generic, treat as `not_found_descriptions_list`.
+3. Never default to 0.0 quantity.
+4. One output row per search item, no duplication.
+5. All output arrays must be the same length.
+6. Date format must be DD-MM-YYYY (use today's date if not given).
+
+OUTPUT FORMAT:
+Return the data using this structure:
+(found_descriptions_list, not_found_descriptions_list, relevant_indexes, updated_quantity, dates, remarks)
 
 EXAMPLE:
 Search: "25 kgs structural steel at 05-07-2025"
 Sheet: "30: Structural Steel"
-Output: found_descriptions_list=["Structural Steel"], relevant_indexes=[30], updated_quantity=[25.0], dates=["05-07-2025"]
+Output:
+found_descriptions_list=["Structural Steel"],
+not_found_descriptions_list=[""],
+relevant_indexes=[30],
+updated_quantity=[25.0],
+dates=["05-07-2025"],
+remarks=["Structural Steel is updated with 25.0 at 05-07-2025"]
 
-RULES:
-- All output arrays must be same length
-- Use sheet descriptions for found_descriptions_list
-- If single date mentioned, use for all items
-- Convert quantities to float values
-- Date format: DD-MM-YYYY
+Search: "Structural Steel done on 13th July"
+Sheet: "30: Structural Steel"
+Output:
+found_descriptions_list=[""],
+not_found_descriptions_list=["Structural Steel"],
+relevant_indexes=[],
+updated_quantity=[],
+dates=[],
+remarks=["Structural Steel - quantity is missing"]
+"""
 
-Call final_result function with the extracted data."""
 
     logger.info(f"prompt created with length: {len(PROMPT)}")
     return PROMPT
