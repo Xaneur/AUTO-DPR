@@ -645,6 +645,7 @@ dependencies = [
     { name = "openai-whisper" },
     { name = "openpyxl" },
     { name = "pandas" },
+    { name = "prompt" },
     { name = "psutil" },
     { name = "pyaudio" },
     { name = "pydantic" },
@@ -679,6 +680,7 @@ requires-dist = [
     { name = "openai-whisper", specifier = ">=20250625" },
     { name = "openpyxl", specifier = ">=3.1.2" },
     { name = "pandas", specifier = ">=2.3.0" },
+    { name = "prompt", specifier = ">=0.4.1" },
     { name = "psutil", specifier = ">=7.0.0" },
     { name = "pyaudio", specifier = ">=0.2.13" },
     { name = "pydantic", specifier = ">=2.11.7" },
@@ -2205,6 +2207,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/5e/cf/40dde0a2be27cc1eb41e333d1a674a74ce8b8b0457269cc640fd42b07cf7/prometheus_client-0.22.1.tar.gz", hash = "sha256:190f1331e783cf21eb60bca559354e0a4d4378facecf78f5428c39b675d20d28", size = 69746, upload-time = "2025-06-02T14:29:01.152Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/ae/ec06af4fe3ee72d16973474f122541746196aaa16cea6f66d18b963c6177/prometheus_client-0.22.1-py3-none-any.whl", hash = "sha256:cca895342e308174341b2cbf99a56bef291fbc0ef7b9e5412a0f26d653ba7094", size = 58694, upload-time = "2025-06-02T14:29:00.068Z" },
+]
+
+[[package]]
+name = "prompt"
+version = "0.4.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a6/f1/f550fffbdbe3ca55591d2c34f7d561ee8126a2e4f0b402a84860a31a5f68/prompt-0.4.1.tar.gz", hash = "sha256:8a7694b88f8c65188a983315e72582bf42fcc251b97042be1d2a2ad1aa0ebe0e", size = 6500, upload-time = "2017-06-05T17:01:13.381Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/de/2a/baf04fe6bef0b73666fd891db1c395813ee9691f949ae4b42500dc440adb/prompt-0.4.1-py3-none-any.whl", hash = "sha256:98527de8dc3f0aa29669a39fbffeaf578ba6654dc836f737b6a5c6f9279002b7", size = 7149, upload-time = "2017-06-05T17:01:11.702Z" },
 ]
 
 [[package]]

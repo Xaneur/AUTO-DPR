@@ -27,7 +27,7 @@ not_found_descriptions_list=[],
 relevant_indexes=[30],
 updated_quantity=[25.0],
 dates=["05-07-2025"],
-remarks=["Structural Steel is updated with 25.0 at 05-07-2025"]
+conclution="Structural Steel is updated with 25.0 at 05-07-2025"
 
 **EXAMPLE 2:**
 Search: "Structural Steel done on 13th July"
@@ -38,7 +38,7 @@ not_found_descriptions_list=["Structural Steel"],
 relevant_indexes=[],
 updated_quantity=[],
 dates=[],
-remarks=["Structural Steel - quantity is missing"]
+conclution="Structural Steel - quantity is missing"
 
 **EXAMPLE 3:**
 Search: "25 kgs of structural steel work is done and excavation has been done on 5-07-2025"
@@ -49,7 +49,7 @@ not_found_descriptions_list=["Excavation for foundation of all type of soil upto
 relevant_indexes=[30],
 updated_quantity=[25.0],
 dates=["05-07-2025"],
-remarks=["Structural Steel is updated with 25.0 at 05-07-2025", "Excavation for foundation of all type of soil upto1.5 mt depth - quantity is missing"]
+conclution="Structural Steel is updated with 25.0 at 05-07-2025 but Excavation for foundation of all type of soil upto1.5 mt depth - quantity is missing"
 
 **THOUGHT PROCESS - Complete this reasoning:**
 
@@ -96,7 +96,7 @@ ACTION:
 - not_found_descriptions_list = ["Excavation for foundation of all type of soil upto1.5 mt depth"]
 - relevant_indexes = [30]
 - updated_quantity = [25.0]
-- remarks = ["Structural Steel is updated with 25.0 at 05-07-2025", "Excavation for foundation of all type of soil upto1.5 mt depth - quantity is missing"]
+- conclution = "Structural Steel is updated with 25.0 at 05-07-2025 but Excavation for foundation of all type of soil upto1.5 mt depth - quantity is missing"
 
 **NOW ANALYZE THE CURRENT SEARCH TEXT:**
 Apply the same ReAct process to: "{search_description}"

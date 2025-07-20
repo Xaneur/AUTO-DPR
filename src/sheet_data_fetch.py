@@ -1,8 +1,9 @@
 import openpyxl
 from openpyxl.utils import get_column_letter
 import datetime
-from typing import List, Optional
+from typing import List
 from utils.logger import get_logger
+
 logger = get_logger(__name__)
 
 def get_available_sheets(file_path: str) -> List[str]:
@@ -21,12 +22,13 @@ def get_available_sheets(file_path: str) -> List[str]:
     """
     try:
         logger.info(f"Fetching available sheets from: {file_path}")
-        # Load the workbook in read-only mode for better performance
+
         wb = openpyxl.load_workbook(file_path, read_only=True)
-        sheets = [sheet.strip() for sheet in wb.sheetnames if sheet.strip()]  # Remove empty or whitespace-only names
-        wb.close()  # Important to close the workbook when done
+        sheets = [sheet.strip() for sheet in wb.sheetnames if sheet.strip() != "LOGS"]  # Remove empty or whitespace-only names
+        wb.close()  
         logger.info(f"Found {len(sheets)} sheets: {', '.join(sheets)}")
         return sheets
+    
     except FileNotFoundError as e:
         logger.error(f"File not found: {file_path}")
         raise FileNotFoundError(f"The specified file was not found: {file_path}") from e
@@ -39,19 +41,15 @@ def get_descriptions_with_index(file_path, sheet_name="July.25"):
     Extract Description column (C) data with row indices.
     Returns string format: "[(row_index, description), (row_index, description), ...]"
     """
-    # Load the workbook
     logger.info(f"getting descriptions from workbook from path : {file_path} and sheet name is : {sheet_name}")
     wb = openpyxl.load_workbook(file_path)
     ws = wb[sheet_name]
     
-    # Create list of tuples (row_index, description)
     descriptions = []
     
-    # Start from row 2 (skip header) and go to the last row
     for row_num in range(5, ws.max_row + 1):
         cell_value = ws[f"C{row_num}"].value
         
-        # Only include non-empty values
         if cell_value is not None and str(cell_value).strip() != "":
             descriptions.append((row_num, cell_value))
     
@@ -81,7 +79,7 @@ def get_date_column(file_path, sheet_name="July.25", date: datetime.date = None)
 
 def put_logs_in_file(file_path: str, sheet_name="LOGS", description=None, found_description=None,
                    row_index=None, column_index=None, value: float = None,
-                   name: str = None, location: str = None):
+                   name: str = None, location: str = None, remark: str = None):
     """
     Log an entry to the specified sheet with additional metadata.
     
@@ -102,7 +100,7 @@ def put_logs_in_file(file_path: str, sheet_name="LOGS", description=None, found_
         ws = wb.create_sheet("LOGS")
         headers = [
             'Logged_At', 'Updated_Sheet', 'Name', 'Location', 
-            'User Description', 'Found Description', 'Row', 'Column', 'Value'
+            'User Description', 'Matched Description', 'Row', 'Column', 'Value', 'Remark',
         ]
         ws.append(headers)
     else:
@@ -124,11 +122,12 @@ def put_logs_in_file(file_path: str, sheet_name="LOGS", description=None, found_
     ws.cell(row=next_row, column=7, value=row_index)
     ws.cell(row=next_row, column=8, value=column_index)
     ws.cell(row=next_row, column=9, value=value)
+    ws.cell(row=next_row, column=10, value=remark)
 
     wb.save(file_path)
     logger.info(f"log row {next_row} written successfully")
 
-def update_sheet(file_path: str = "/Users/devrajsinhgohil/Desktop/DPR/excel_files/DPR.xlsx", 
+def update_sheet(file_path: str,
                sheet_name: str = "July.25", 
                row_index: int = None, 
                column_index: int = None, 
@@ -151,10 +150,8 @@ def update_sheet(file_path: str = "/Users/devrajsinhgohil/Desktop/DPR/excel_file
     
     if row_index is None or column_index is None or value is None:
         raise ValueError("row_index, column_index, and value must be provided")
-    
-    if not isinstance(value, (int, float)):
-        raise ValueError("Value must be a number")
-    
+
+
     try:
         # Load the workbook
         wb = openpyxl.load_workbook(file_path)
@@ -185,17 +182,32 @@ def update_sheet(file_path: str = "/Users/devrajsinhgohil/Desktop/DPR/excel_file
         logger.error(f"Error updating sheet: {str(e)}")
         raise
 
-if __name__ == "__main__":
-    file_path = "/Users/devrajsinhgohil/Desktop/DPR/excel_files/DPR.xlsx"
+def get_history(file_path: str, name: str, location: str ):
 
-    put_logs_in_file(file_path=file_path, sheet_name="LOGS", description="test", row_index=46, column_index=5, value=4.5)
-    # sheet_name = "July.25"
-    # result = get_descriptions_with_index(file_path)
-    # print(result)
+    try:
+        wb = openpyxl.load_workbook(file_path)
+        ws = wb["LOGS"]
 
-    # print("_" * 100)
+        remarks = []
+        for row_num in range(1, ws.max_row + 1):
+            user_name = ws[f"C{row_num}"].value
+            user_location = ws[f"D{row_num}"].value
+            
+            if user_name == name and user_location == location:
+                remarks.append({
+                    "data": ws[f"A{row_num}"].value,
+                    "name": user_name,
+                    "location": user_location,
+                    "description": ws[f"E{row_num}"].value,
+                    "found_description": ws[f"F{row_num}"].value,
+                    "row": ws[f"G{row_num}"].value,
+                    "column": ws[f"H{row_num}"].value,
+                    "value": ws[f"I{row_num}"].value,
+                    "conclution": ws[f"J{row_num}"].value
+                })
+        
+        return remarks
     
-    # date_column = get_date_column(file_path)
-    # print(date_column)
-
-    # update_sheet(file_path=file_path, sheet_name=sheet_name, row_index=46, column_index=5, value=4.5)
+    except Exception as e:
+        logger.error(f"Error loading workbook: {str(e)}")
+        raise

@@ -6,14 +6,11 @@ import asyncio
 from dotenv import load_dotenv
 from typing import Optional
 from pydantic import BaseModel, Field
-import prompt
 from src.prompt import prompt_builder
 from utils.logger import get_logger
 from agno.agent import Agent
 from agno.models.groq import Groq
-from agno.tools.thinking import ThinkingTools
 
-import datetime
 logger = get_logger(__name__)
 
 load_dotenv()
@@ -24,7 +21,8 @@ class SupportResult(BaseModel):
     relevant_indexes: list[int] = Field(description="Indexes of found descriptions from the sheet data")
     updated_quantity: list[float] = Field(description="Quantities of work done for found descriptions which is mentioned in the search description")
     dates: list[str] = Field(default=[], description="List of date strings in DD-MM-YYYY format. Use current date if not specified. Current year is 2025.")
-    remarks: list[str] = Field(default=[], description="List of remarks for each item")
+    # remarks: list[str] = Field(default=[], description="List of remarks for each item")
+    conclution: str = Field(description="precise and small Conclution of the which search has found or which is't")
 
 
 support_agent = Agent(
@@ -58,7 +56,7 @@ support_agent = Agent(
     3. Check if quantity is explicit and > 0
     4. Verify item exists in sheet data
     5. Make classification decision
-    6. Generate appropriate remark
+    6. Generate appropriate conclution what happend 
 """,
     markdown=False,
     response_model=SupportResult,
@@ -79,7 +77,7 @@ async def get_llm_result(search_description):
             response.content.relevant_indexes, 
             response.content.updated_quantity, 
             response.content.dates,
-            response.content.remarks
+            response.content.conclution
         )
     except Exception as e:
         logger.error(f"Error in get_llm_result: {e}")

@@ -17,6 +17,7 @@ dependencies = [
     "openai-whisper>=20250625",
     "openpyxl>=3.1.2",
     "pandas>=2.3.0",
+    "prompt>=0.4.1",
     "psutil>=7.0.0",
     "pyaudio>=0.2.13",
     "pydantic>=2.11.7",

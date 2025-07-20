@@ -1,18 +1,14 @@
 import logging
-from fastapi import FastAPI, Request, HTTPException 
+from fastapi import FastAPI, HTTPException 
 import subprocess
-import threading
+from typing import Optional
 import time
-import json
 from dotenv import load_dotenv
 import os
-from typing import Dict, Any
-from streamlit import rerun
 import uvicorn
 from utils.logger import get_logger
-from src.sheet_data_fetch import get_available_sheets
+from src.sheet_data_fetch import get_available_sheets, get_history
 from src.main import updated_quantity_in_sheet
-from queue import Queue
 import re
 import requests
 
@@ -20,7 +16,6 @@ load_dotenv()
 PATH = os.getenv("EXCEL_FILE_PATH")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-request_queue = Queue()
 app = FastAPI()
 logger = get_logger(__name__)
 
@@ -32,25 +27,18 @@ async def get_credentials():
     return {"GROQ_API_KEY": GROQ_API_KEY, "AVAILABLE_SHEETS": get_available_sheets(PATH)}
 
 @app.post("/process")
-async def process_data(request: Request):
+async def process_data(transcription: str, sheet_name: Optional[str] = "", name: Optional[str] = "", location: Optional[str] = ""):
     try:
-        # Get raw request body
-        body = await request.body()
-        data = json.loads(body)
-        logger.info(f"data: {data}") 
+        output = await updated_quantity_in_sheet(transcription, sheet_name, name, location)
+        return {"conclution": output[1]}
 
-        transcription_list = data.get("transcription_list",[])
-        sheet_name = data.get("sheet_name","")
-        name = data.get("name","")
-        location = data.get("location","")
-
-        for transcription in transcription_list:
-            await updated_quantity_in_sheet(transcription, sheet_name, name, location)
-        
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON format")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/get_history")
+async def get_history_data(name: Optional[str] = "", location: Optional[str] = ""):
+    logger.info(f"name: {name}, location: {location}") 
+    return get_history(PATH, name, location)
 
 def get_ngrok_url_from_api():
     """Get ngrok URL from the local API"""
