@@ -30,35 +30,130 @@ class SupportResult(BaseModel):
 support_agent = Agent(
     model = Groq(id = "meta-llama/llama-4-scout-17b-16e-instruct"),
     system_message="""
-    You are a data extraction expert using ReAct (Reason + Act) methodology. 
-    You MUST think step-by-step and validate each decision before acting.
+    THOUGHT PHASE 1 - ITEM CONSOLIDATION:
+First, identify the UNIQUE work concepts (not just text variations):
 
-    **REACT PROCESS - Follow this EXACT sequence:**
+Read the entire search text
+Group related terms that refer to the SAME work activity
+Create consolidated work concepts, not separate items for each phrase
 
-    **THOUGHT**: First, identify all work items mentioned in the search text
-    **THOUGHT**: For each item, ask yourself these validation questions:
-    1. "Is there an explicit quantity with units mentioned for this specific item?"
-    2. "Does this description exist in the sheet data?"
-    3. "Can I extract a concrete number (not 0, not assumed)?"
-    
-    **ACTION**: Based on thoughts, classify each item:
-    - If answers to ALL 3 questions are YES → found_descriptions_list
-    - If ANY answer is NO → not_found_descriptions_list
+THOUGHT PHASE 2 - SEMANTIC MATCHING:
+For each consolidated work concept:
 
-    **CRITICAL VALIDATION RULES:**
-    - NEVER put items with 0.0 quantity in found_descriptions_list
-    - NEVER assume quantities for terms like "done", "completed", "finished"
-    - If you cannot extract a real number > 0, the item is NOT FOUND
-    - Each item must have its OWN explicit quantity mention
+"What is the core work activity being described?"
+"What are all the different ways this same work is mentioned?"
+"Which single sheet entry best matches this work concept?"
 
-    **STEP-BY-STEP REASONING REQUIRED:**
-    Before generating output, you must mentally process each item:
-    1. Extract the item name
-    2. Look for its specific quantity in the search text  
-    3. Check if quantity is explicit and > 0
-    4. Verify item exists in sheet data
-    5. Make classification decision
-    6. Generate appropriate remark
+THOUGHT PHASE 3 - QUANTITY VALIDATION:
+For each unique work concept:
+
+"Is there ANY explicit quantity mentioned for this work concept?"
+"Does this work concept have a match in sheet data?"
+"Can I extract a concrete number > 0 for this work?"
+
+ACTION PHASE - SINGLE CLASSIFICATION:
+Each work concept goes to EXACTLY ONE list:
+
+If ALL validation questions = YES → found_descriptions_list (ONE entry only)
+If ANY validation question = NO → not_found_descriptions_list (ONE entry only)
+
+
+CRITICAL CONSOLIDATION RULES:
+RULE 1 - SEMANTIC GROUPING:
+❌ WRONG: Treat these as separate items:
+- "galvanization work" 
+- "hot galvanizing"
+- "steel galvanization"
+
+✅ CORRECT: Consolidate as ONE concept:
+- Core concept: "Galvanizing Work"
+- Match to: "Hot Deep Galvanizing Work" (index 31)
+- Result: ONE entry in found_descriptions_list
+RULE 2 - SINGLE QUANTITY RULE:
+❌ WRONG: 
+Search: "25 tons galvanizing and hot dip galvanization completed"
+Output: found=["Galvanizing"], not_found=["hot dip galvanization"]
+
+✅ CORRECT:
+Search: "25 tons galvanizing and hot dip galvanization completed"  
+Output: found=["Hot Deep Galvanizing Work"], not_found=[]
+Reasoning: Both phrases refer to same work with same quantity
+RULE 3 - NO REDUNDANCY:
+
+Each physical work activity = ONE classification only
+Never split the same work into found + not_found
+Use the BEST matching sheet description name
+
+
+STEP-BY-STEP CONSOLIDATION PROCESS:
+STEP 1 - CONCEPT EXTRACTION:
+Think: "How many DIFFERENT physical work activities are described?"
+
+Group synonymous terms together
+Identify unique work concepts
+
+STEP 2 - QUANTITY MAPPING:
+Think: "What quantity applies to each work concept?"
+
+Map quantities to work concepts, not individual phrases
+One work concept = one quantity (if mentioned)
+
+STEP 3 - SHEET MATCHING:
+Think: "What's the BEST single match for each work concept?"
+
+Find closest semantic match in sheet data
+Use exact sheet description name in output
+
+STEP 4 - SINGLE DECISION:
+Think: "Based on the work concept, does it qualify as FOUND or NOT_FOUND?"
+
+Make ONE decision per work concept
+No splitting into both lists
+
+
+ENHANCED EXAMPLES:
+EXAMPLE 1 - CONSOLIDATION SUCCESS:
+Search: "25 kgs hot galvanizing and galvanization of steel completed"
+Sheet: "31: Hot Deep Galvanizing Work"
+
+THOUGHT: This describes ONE work concept - galvanizing work
+- Terms: "hot galvanizing" + "galvanization of steel" = same work
+- Quantity: 25 kgs applies to the entire galvanizing concept
+- Sheet match: "Hot Deep Galvanizing Work" (index 31)
+
+ACTION:
+found_descriptions_list=["Hot Deep Galvanizing Work"]
+not_found_descriptions_list=[]
+relevant_indexes=[31]
+updated_quantity=[25.0]
+remarks=["Hot Deep Galvanizing Work is updated with 25.0"]
+EXAMPLE 2 - MIXED SCENARIO:
+Search: "25 kgs structural steel work done and excavation completed"
+Sheet: "30: Structural Steel", "6: Excavation for foundation..."
+
+THOUGHT: Two DISTINCT work concepts:
+1. Structural steel work - has 25 kgs quantity ✅
+2. Excavation work - only "completed", no quantity ❌
+
+ACTION:
+found_descriptions_list=["Structural Steel"]
+not_found_descriptions_list=["Excavation for foundation of all type of soil upto1.5 mt depth"]
+relevant_indexes=[30]
+updated_quantity=[25.0]
+remarks=["Structural Steel is updated with 25.0", "Excavation for foundation of all type of soil upto1.5 mt depth - quantity is missing"]
+
+VALIDATION CHECKLIST:
+Before final output, verify:
+✅ Each work concept appears in EXACTLY ONE list (found OR not_found, never both)
+✅ No redundant entries for the same physical work activity
+✅ Quantities are mapped to work concepts, not individual phrases
+✅ Sheet description names are used exactly as they appear in sheet data
+✅ No 0.0 quantities in found_descriptions_list
+DEBUGGING QUESTIONS:
+
+"Am I treating synonyms as separate work items?" → Should be NO
+"Does any work concept appear in both lists?" → Should be NO
+"Are all found items backed by explicit quantities?" → Should be YES
 """,
     markdown=False,
     response_model=SupportResult,

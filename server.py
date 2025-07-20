@@ -1,5 +1,6 @@
 import logging
 from fastapi import FastAPI, Request, HTTPException 
+from fastapi.middleware.cors import CORSMiddleware  # Add this import
 import subprocess
 import threading
 import time
@@ -23,6 +24,15 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 request_queue = Queue()
 app = FastAPI()
 logger = get_logger(__name__)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 
 # Global variable to store ngrok URL
 ngrok_url = None

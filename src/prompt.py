@@ -6,7 +6,7 @@ logger = get_logger(__name__)
 def prompt_builder(search_description: str, path: str = FILE_PATH, sheet_name: str = SHEET_NAME):
     description_list = get_descriptions_with_index(path, sheet_name)
 
-    PROMPT = f"""**REACT FRAMEWORK ANALYSIS**
+    PROMPT = f"""**MANDATORY CONSOLIDATION FRAMEWORK - NO EXCEPTIONS**
 
 **SHEET DATA:**
 {description_list}
@@ -14,101 +14,119 @@ def prompt_builder(search_description: str, path: str = FILE_PATH, sheet_name: s
 **SEARCH TEXT:** 
 {search_description}
 
-**INSTRUCTIONS:** Use ReAct methodology - Think step by step, then Act.
+**CRITICAL INSTRUCTION:** 
+You MUST consolidate synonymous terms into single work concepts. NEVER create separate entries for the same physical work activity.
 
-**FEW-SHOT EXAMPLES:**
+**FORCED CONSOLIDATION PROCESS:**
 
-**EXAMPLE 1:**
-Search: "25 kgs structural steel at 05-07-2025"
-Sheet: "30: Structural Steel"
-Output:
-found_descriptions_list=["Structural Steel"],
-not_found_descriptions_list=[],
-relevant_indexes=[30],
-updated_quantity=[25.0],
-dates=["05-07-2025"],
-remarks=["Structural Steel is updated with 25.0 at 05-07-2025"]
+**STEP 1 - MANDATORY GROUPING:**
+Before analyzing anything else, answer this:
+"What are ALL the different ways the SAME work activity is mentioned in the search text?"
 
-**EXAMPLE 2:**
-Search: "Structural Steel done on 13th July"
-Sheet: "30: Structural Steel"
-Output:
-found_descriptions_list=[],
-not_found_descriptions_list=["Structural Steel"],
-relevant_indexes=[],
-updated_quantity=[],
-dates=[],
-remarks=["Structural Steel - quantity is missing"]
+Group these terms together:
+- galvanizing, galvanization, hot galvanizing, steel galvanization → ALL = "galvanizing work"
+- excavation, excavating, digging → ALL = "excavation work"  
+- steel work, structural steel, steel construction → ALL = "steel work"
 
-**EXAMPLE 3:**
-Search: "25 kgs of structural steel work is done and excavation has been done on 5-07-2025"
-Sheet: "30: Structural Steel, 6: Excavation for foundation..."
-Expected Output:
-found_descriptions_list=["Structural Steel"],
-not_found_descriptions_list=["Excavation for foundation of all type of soil upto1.5 mt depth"],
-relevant_indexes=[30],
-updated_quantity=[25.0],
-dates=["05-07-2025"],
-remarks=["Structural Steel is updated with 25.0 at 05-07-2025", "Excavation for foundation of all type of soil upto1.5 mt depth - quantity is missing"]
+**STEP 2 - COUNT UNIQUE WORK ACTIVITIES:**
+Ask: "How many DIFFERENT physical work activities are mentioned?" (Not how many terms, but how many actual work types)
 
-**THOUGHT PROCESS - Complete this reasoning:**
+**STEP 3 - ONE QUANTITY PER WORK ACTIVITY:**
+For each unique work activity, ask: "What quantity applies to this entire work activity?"
 
-**STEP 1 - IDENTIFY ITEMS:**
-Think: "What work items are mentioned in the search text?"
-List each item separately.
+**STEP 4 - ONE CLASSIFICATION PER WORK ACTIVITY:**
+Each work activity gets EXACTLY ONE classification - never split the same work into both lists.
 
-**STEP 2 - QUANTITY ANALYSIS:**  
-For each item, think:
-- "What is the EXPLICIT quantity mentioned for [ITEM NAME]?"
-- "Is this quantity a real number with units, or just words like 'done'?"
-- "If I see 'done/completed/finished' without numbers, this means NO QUANTITY"
+**MANDATORY EXAMPLES:**
 
-**STEP 3 - SHEET MATCHING:**
-For each item, think:
-- "Does [ITEM NAME] exist in the provided sheet data?"
-- "What is the closest match and its index?"
+**EXAMPLE A - SINGLE WORK ACTIVITY:**
+```
+Search: "25 kgs hot galvanizing and galvanization of steel completed"
+Sheet: "31: Hot Deep Galvanizing Work"
 
-**STEP 4 - VALIDATION DECISION:**
-For each item, validate:
-- ✅ Has explicit quantity (real number > 0) AND exists in sheet → FOUND
-- ❌ Missing quantity OR not in sheet OR quantity is 0 → NOT FOUND
+FORCED ANALYSIS:
+- Terms mentioned: "hot galvanizing" + "galvanization of steel"
+- CONSOLIDATION: Both terms refer to the SAME work activity = galvanizing work
+- Unique work activities: 1 (only galvanizing work)
+- Quantity for galvanizing work: 25 kgs
+- Sheet match: "Hot Deep Galvanizing Work" (index 31)
+- Classification: Has quantity + exists in sheet = FOUND
 
-**STEP 5 - CLASSIFICATION:**
-Based on validation, classify each item into appropriate list.
+MANDATORY OUTPUT:
+found_descriptions_list=["Hot Deep Galvanizing Work"]
+not_found_descriptions_list=[]
+relevant_indexes=[31]
+updated_quantity=[25.0]
+remarks=["Hot Deep Galvanizing Work is updated with 25.0"]
+```
 
-**DETAILED REASONING EXAMPLE:**
-Search: "25 kgs of structural steel work is done and excavation has been done"
+**EXAMPLE B - MULTIPLE WORK ACTIVITIES:**
+```
+Search: "25 kgs structural steel work and excavation completed"  
+Sheet: "30: Structural Steel", "6: Excavation for foundation..."
 
-THOUGHT: I see two items:
-1. "structural steel work" - has "25 kgs" explicitly mentioned ✅
-2. "excavation" - only says "has been done", no quantity mentioned ❌
+FORCED ANALYSIS:
+- Terms mentioned: "structural steel work" + "excavation"
+- CONSOLIDATION: These are 2 DIFFERENT work activities
+- Unique work activities: 2 (steel work + excavation work)
+- Quantities: Steel work has 25 kgs, excavation has no quantity
+- Classifications:
+  1. Steel work: Has quantity + exists = FOUND
+  2. Excavation: No quantity = NOT FOUND
 
-THOUGHT: Checking sheet data:
-1. "Structural Steel" exists at index 30 ✅  
-2. "Excavation for foundation..." exists at index 6 ✅
+MANDATORY OUTPUT:
+found_descriptions_list=["Structural Steel"]
+not_found_descriptions_list=["Excavation for foundation of all type of soil upto1.5 mt depth"]
+relevant_indexes=[30]
+updated_quantity=[25.0]
+remarks=["Structural Steel is updated with 25.0", "Excavation for foundation of all type of soil upto1.5 mt depth - quantity is missing"]
+```
 
-VALIDATION:
-1. Structural steel: Has quantity (25.0) + exists in sheet → FOUND
-2. Excavation: No quantity (only "done") → NOT FOUND
+**PROHIBITION RULES:**
+❌ NEVER do this: found=["Hot Deep Galvanizing Work"], not_found=["galvanization of steel"]
+❌ NEVER split the same work activity into both lists
+❌ NEVER treat synonymous terms as separate work activities
+❌ NEVER create redundant entries
 
-ACTION: 
-- found_descriptions_list = ["Structural Steel"]
-- not_found_descriptions_list = ["Excavation for foundation of all type of soil upto1.5 mt depth"]
-- relevant_indexes = [30]
-- updated_quantity = [25.0]
-- remarks = ["Structural Steel is updated with 25.0 at 05-07-2025", "Excavation for foundation of all type of soil upto1.5 mt depth - quantity is missing"]
+✅ ALWAYS do this: Consolidate first, then classify once
 
-**NOW ANALYZE THE CURRENT SEARCH TEXT:**
-Apply the same ReAct process to: "{search_description}"
+**FORCED REASONING TEMPLATE:**
+You MUST complete this exact reasoning:
 
-**REASONING CHECKPOINT:**
-Before generating final output, verify:
-- Did I find explicit quantities (numbers + units) for each found item?
-- Did I put any 0.0 quantities in found_descriptions_list? (This should be NO)
-- Are all found items backed by real numbers from the search text?
+```
+CONSOLIDATION ANALYSIS:
+- Terms in search text: [list all work-related terms]
+- Synonymous groupings: [group terms that refer to same work]
+- Unique work activities identified: [number]
+- For each unique work activity:
+  * Name: [consolidated name]
+  * Quantity mentioned: [number or "none"]
+  * Sheet match: [best match and index]
+  * Classification: [FOUND or NOT_FOUND with reason]
+```
 
-**GENERATE OUTPUT ONLY AFTER COMPLETING THIS REASONING**
+**DECISION TREE - FOLLOW EXACTLY:**
 
+For the search text: "{search_description}"
+
+**DECISION POINT 1:** Are there multiple terms that refer to galvanizing work?
+- If YES → Group them as ONE work activity called "galvanizing work"
+- If NO → Treat as separate activities
+
+**DECISION POINT 2:** For the galvanizing work activity:
+- Does it have an explicit quantity (number + units)? 
+- Does it match any sheet entry?
+- If BOTH YES → Put in found_descriptions_list ONLY
+- If ANY NO → Put in not_found_descriptions_list ONLY
+
+**FORCED SINGLE OUTPUT RULE:**
+The consolidated "galvanizing work" activity goes to EXACTLY ONE list:
+- Either found_descriptions_list = ["Hot Deep Galvanizing Work"] + not_found_descriptions_list = []
+- OR found_descriptions_list = [] + not_found_descriptions_list = ["Hot Deep Galvanizing Work"]
+
+**NEVER BOTH LISTS FOR THE SAME WORK!**
+
+**NOW GENERATE OUTPUT FOLLOWING DECISION TREE**
 """
 
 
