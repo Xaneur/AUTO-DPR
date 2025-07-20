@@ -1,5 +1,5 @@
 """
-this is the file containig Tools & Dependency Injection Example usign pydantic 
+this is the file containing Tools & Dependency Injection Example using pydantic 
 """
 
 import asyncio
@@ -15,29 +15,42 @@ logger = get_logger(__name__)
 load_dotenv()
 
 class SupportResult(BaseModel):
-    relvant_index: int = Field(description="provided index of the serachable description from the given list of the descriptions")
-    updated_quantity: float = Field(description="updated quantity of the work done which provided in the search description")
-    date: Optional[datetime.date] = Field(default=datetime.date.today(), description="date of the work done, current year is 2025, None if date is not provided, if given today in description then go with default value.")
+    found_descriptions_list: list[str] = Field(description="List of descriptions from search that are available in sheet data")
+    not_found_descriptions_list: list[str] = Field(description="List of descriptions from search that are NOT available in sheet data")
+    relevant_indexes: list[int] = Field(description="Indexes of found descriptions from the sheet data")
+    updated_quantity: list[float] = Field(description="Quantities of work done for found descriptions which is mentioned in the search description")
+    dates: list[str] = Field(default=[], description="List of date strings in DD-MM-YYYY format. Use current date if not specified. Current year is 2025.")
 
-support_agent = Agent("groq:llama-3.3-70b-versatile",
+support_agent = Agent(
+    "groq:meta-llama/llama-4-scout-17b-16e-instruct",
     output_type=SupportResult, 
-    output_retries=3,
+    output_retries=6,  # Reduced from 10
     system_prompt=(
-        "you are an expert in index extracting we'll provide the list of description with index and search description "
-        "and you have to findout the index of the description"
-        "index which is best match or complete match with the search description"
-        "also provide the date of the work done also if only date is provided remember current year is 2025, None if date is not provided"
+        "You are a data extraction expert. Analyze search descriptions and match them with sheet data.\n\n"
+        "Rules:\n"
+        "- Match search items with sheet descriptions (fuzzy matching allowed)\n"
+        "- Extract quantities as floats\n"
+        "- All output lists must have equal length\n"
+        "- Use DD-MM-YYYY date format\n"
+        "- If one date given, use for all items\n"
     )
 )
 
-
 async def get_llm_result(search_description):
-    prompt = prompt_builder(search_description) 
-    response = await support_agent.run(prompt)
-    logger.info(f"response is : {response}")
-    logger.info(f"response output is : {response.output}")
-    return response.output.relvant_index, response.output.updated_quantity, response.output.date
-
+    try:
+        prompt = prompt_builder(search_description) 
+        response = await support_agent.run(prompt)
+        logger.info(f"response output is : {response.output}")
+        return (
+            response.output.found_descriptions_list, 
+            response.output.not_found_descriptions_list, 
+            response.output.relevant_indexes, 
+            response.output.updated_quantity, 
+            response.output.dates
+        )
+    except Exception as e:
+        logger.error(f"Error in get_llm_result: {e}")
+        raise
 
 if __name__ == "__main__": 
-    asyncio.run(get_llm_result("25 kgs of structural steel work is done")) 
+    asyncio.run(get_llm_result("25 kgs of structural steel work is done and 7 cubic meter galvanized work has been done at 25-07-2025"))

@@ -13,6 +13,8 @@ from utils.logger import get_logger
 from src.sheet_data_fetch import get_available_sheets
 from src.main import updated_quantity_in_sheet
 from queue import Queue
+import re
+import requests
 
 load_dotenv()
 PATH = os.getenv("EXCEL_FILE_PATH")
@@ -21,6 +23,10 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 request_queue = Queue()
 app = FastAPI()
 logger = get_logger(__name__)
+
+# Global variable to store ngrok URL
+ngrok_url = None
+
 @app.get("/get_credentials")
 async def get_credentials():
     return {"GROQ_API_KEY": GROQ_API_KEY, "AVAILABLE_SHEETS": get_available_sheets(PATH)}
@@ -46,19 +52,54 @@ async def process_data(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-def start_localtunnel():
+def get_ngrok_url_from_api():
+    """Get ngrok URL from the local API"""
     try:
-        # Delay slightly to ensure server starts before tunnel
-        time.sleep(2)
-        subprocess.run(["lt", "--port", "8000"])
+        response = requests.get("http://localhost:4040/api/tunnels")
+        if response.status_code == 200:
+            tunnels = response.json()
+            for tunnel in tunnels.get("tunnels", []):
+                if tunnel.get("proto") == "https":
+                    return tunnel.get("public_url")
     except Exception as e:
-        logger.error(f"Error starting localtunnel: {e}")
+        logger.error(f"Error getting ngrok URL from API: {e}")
+    return None
+
+def start_ngrok():
+    global ngrok_url
+    try:
+        time.sleep(2)
+        # Start ngrok process
+        process = subprocess.Popen(
+            ["ngrok", "http", "8000"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        
+        # Wait a bit for ngrok to start
+        time.sleep(5)
+        
+        # Get URL from ngrok API
+        ngrok_url = get_ngrok_url_from_api()
+        pattern = re.compile(r'https://([a-zA-Z0-9]+)\.ngrok-free\.app')
+        m = pattern.search(ngrok_url)
+        if m:
+            print(f"APP PASSWORD: {m.group(1)}", flush=True)
+            logging.info(f"APP PASSWORD: {m.group(1)}")
+        else:
+            logger.error("Failed to get ngrok URL")
+            
+        process.wait()
+        
+    except Exception as e:
+        logger.error(f"Error starting ngrok: {e}")
+
 
 if __name__ == "__main__":
-    # Start localtunnel in a separate thread
-    tunnel_thread = threading.Thread(target=start_localtunnel, daemon=True)
-    tunnel_thread.start()
 
-    # Start FastAPI server
+    ngrok_thread = threading.Thread(target=start_ngrok, daemon=True)    
+    ngrok_thread.start()
+
+    
     uvicorn.run(app, host="0.0.0.0", port=8000)

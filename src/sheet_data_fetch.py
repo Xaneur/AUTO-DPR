@@ -79,7 +79,7 @@ def get_date_column(file_path, sheet_name="July.25", date: datetime.date = None)
     logger.info("date column not found")
     return None
 
-def put_logs_in_file(file_path: str, sheet_name="LOGS", description=None, 
+def put_logs_in_file(file_path: str, sheet_name="LOGS", description=None, found_description=None,
                    row_index=None, column_index=None, value: float = None,
                    name: str = None, location: str = None):
     """
@@ -102,7 +102,7 @@ def put_logs_in_file(file_path: str, sheet_name="LOGS", description=None,
         ws = wb.create_sheet("LOGS")
         headers = [
             'Logged_At', 'Updated_Sheet', 'Name', 'Location', 
-            'Description', 'Row', 'Column', 'Value'
+            'User Description', 'Found Description', 'Row', 'Column', 'Value'
         ]
         ws.append(headers)
     else:
@@ -120,9 +120,10 @@ def put_logs_in_file(file_path: str, sheet_name="LOGS", description=None,
     ws.cell(row=next_row, column=3, value=name)
     ws.cell(row=next_row, column=4, value=location)
     ws.cell(row=next_row, column=5, value=description)
-    ws.cell(row=next_row, column=6, value=row_index)
-    ws.cell(row=next_row, column=7, value=column_index)
-    ws.cell(row=next_row, column=8, value=value)
+    ws.cell(row=next_row, column=6, value=found_description)
+    ws.cell(row=next_row, column=7, value=row_index)
+    ws.cell(row=next_row, column=8, value=column_index)
+    ws.cell(row=next_row, column=9, value=value)
 
     wb.save(file_path)
     logger.info(f"log row {next_row} written successfully")
