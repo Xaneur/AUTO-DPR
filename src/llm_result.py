@@ -3,11 +3,10 @@ this is the file containing Tools & Dependency Injection Example using pydantic
 """
 
 import asyncio
-from agno.tools import tool
-from pydantic_ai import Agent
 from dotenv import load_dotenv
 from typing import Optional
 from pydantic import BaseModel, Field
+import prompt
 from src.prompt import prompt_builder
 from utils.logger import get_logger
 from agno.agent import Agent
@@ -31,7 +30,7 @@ class SupportResult(BaseModel):
 support_agent = Agent(
     model = Groq(id = "meta-llama/llama-4-scout-17b-16e-instruct"),
     system_message="""
-You are a data extraction expert using ReAct (Reason + Act) methodology. 
+    You are a data extraction expert using ReAct (Reason + Act) methodology. 
     You MUST think step-by-step and validate each decision before acting.
 
     **REACT PROCESS - Follow this EXACT sequence:**
