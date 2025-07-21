@@ -16,6 +16,7 @@ from utils.logger import get_logger
 load_dotenv()
 PATH = os.getenv("EXCEL_FILE_PATH")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+AUTHRISED_USERS = os.getenv("ALLOWED_USERS")
 
 app = FastAPI()
 logger = get_logger(__name__)
@@ -23,12 +24,12 @@ logger = get_logger(__name__)
 # Global variable to store ngrok URL
 ngrok_url = None
 
-
 @app.get("/get_credentials")
 async def get_credentials():
     return {
         "GROQ_API_KEY": GROQ_API_KEY,
         "AVAILABLE_SHEETS": get_available_sheets(PATH),
+        "AUTHRISED_USERS": AUTHRISED_USERS
     }
 
 @app.post("/process")
@@ -46,7 +47,6 @@ async def process_data(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.post("/get_history")
 async def get_history_data(name: Optional[str] = "", location: Optional[str] = ""):
