@@ -221,5 +221,6 @@ def validate_and_setup_ngrok(token: str) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
+
     print(is_ngrok_authtoken_valid())
-    print(is_groq_key_valid())
+    # print(is_groq_key_valid())

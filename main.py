@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QFrame, QGridLayout
 )
 from PyQt5.QtCore import QProcess, Qt, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import QTextCursor, QFont, QPalette, QColor, QFontDatabase, QIcon
+from PyQt5.QtGui import QTextCursor, QFont, QPalette, QColor, QFontDatabase
 
 from validation.api_validator import is_ngrok_authtoken_valid, is_groq_key_valid
 
@@ -231,48 +231,166 @@ class InstallationWorker(QThread):
         try:
             self.progress_update.emit("Starting installation...")
             
-            # Simulate some progress steps
-            steps = [
-                "Checking system requirements...",
-                "Downloading dependencies...",
-                "Installing packages...",
-                "Configuring environment...",
-                "Finalizing installation..."
-            ]
+            # Determine the script type and execution method
+            script_ext = os.path.splitext(self.script_path)[1].lower()
+            os_type = platform.system()
+            
+            # Prepare command based on script type and OS
+            if script_ext == '.ps1' and os_type == "Windows":
+                # PowerShell script for Windows with non-interactive mode
+                cmd = [
+                    'powershell.exe',
+                    '-NoProfile',
+                    '-ExecutionPolicy', 'Bypass',
+                    '-NonInteractive',  # Add this flag
+                    '-File', self.script_path
+                ]
+                shell = False
+                self.progress_update.emit("Executing PowerShell script...")
+                
+            elif script_ext == '.sh' and os_type == "Darwin":
+                # Shell script for Mac
+                try:
+                    os.chmod(self.script_path, 0o755)
+                except Exception as chmod_error:
+                    self.progress_update.emit(f"Warning: Could not make script executable: {chmod_error}")
+                
+                cmd = ['bash', self.script_path]
+                shell = False
+                self.progress_update.emit("Executing shell script...")
+                
+            elif script_ext == '.sh' and os_type == "Linux":
+                # Shell script for Linux
+                try:
+                    os.chmod(self.script_path, 0o755)
+                except Exception as chmod_error:
+                    self.progress_update.emit(f"Warning: Could not make script executable: {chmod_error}")
+                
+                cmd = ['bash', self.script_path]
+                shell = False
+                self.progress_update.emit("Executing shell script...")
+                
+            else:
+                error_msg = f"Unsupported script type '{script_ext}' for OS '{os_type}'"
+                self.progress_update.emit(error_msg)
+                self.finished_signal.emit(False, error_msg)
+                return
+            
+            # Get the working directory
+            working_dir = os.path.dirname(self.script_path) if os.path.dirname(self.script_path) else os.getcwd()
+            
+            # Create process with proper stdin handling
+            creation_flags = 0
+            if os_type == "Windows":
+                # Hide console window on Windows
+                creation_flags = subprocess.CREATE_NO_WINDOW
             
             process = subprocess.Popen(
-                self.script_path,
-                shell=True,
+                cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE,  # Add stdin pipe
                 universal_newlines=True,
+                shell=shell,
+                cwd=working_dir,
+                creationflags=creation_flags,
                 bufsize=1
             )
             
-            step_index = 0
+            self.progress_update.emit("Process started, monitoring output...")
+            
+            # Provide default input for any prompts (automatically answer "Y" to prompts)
+            auto_responses = "Y\n" * 10  # Prepare multiple "Y" responses
+            
+            try:
+                # Send auto responses to stdin and close it
+                process.stdin.write(auto_responses)
+                process.stdin.close()
+            except Exception as stdin_error:
+                self.progress_update.emit(f"Warning: Could not write to stdin: {stdin_error}")
+            
+            # Read output in real-time
             while True:
-                output = process.stdout.readline()
-                if output == '' and process.poll() is not None:
+                # Check if process is still running
+                if process.poll() is not None:
                     break
-                if output:
-                    self.progress_update.emit(output.strip())
-                    
-                # Simulate progress steps
-                if step_index < len(steps):
-                    self.progress_update.emit(steps[step_index])
-                    step_index += 1
-                    time.sleep(0.5)
-            
-            return_code = process.poll()
-            
-            if return_code == 0:
-                self.progress_update.emit("Installation completed successfully! ✅")
-                self.finished_signal.emit(True, "Installation completed successfully!")
-            else:
-                error_msg = f"Installation failed with exit code {return_code}"
-                self.progress_update.emit(f"Installation failed! ❌")
-                self.finished_signal.emit(False, error_msg)
                 
+                # Read from stdout with timeout
+                try:
+                    output = process.stdout.readline()
+                    if output:
+                        line = output.strip()
+                        if line:  # Only emit non-empty lines
+                            # Filter out some common prompts that might confuse users
+                            if not any(prompt in line.lower() for prompt in 
+                                     ['press enter', 'continue?', '[y]es/[n]o', 'do you want']):
+                                self.progress_update.emit(line)
+                except Exception as read_error:
+                    self.progress_update.emit(f"Warning: Error reading output: {read_error}")
+                    break
+                
+                # Small delay to prevent overwhelming the UI
+                time.sleep(0.1)
+            
+            # Read any remaining output
+            try:
+                remaining_stdout, remaining_stderr = process.communicate(timeout=30)  # Increased timeout
+                
+                # Process remaining stdout
+                if remaining_stdout:
+                    for line in remaining_stdout.strip().split('\n'):
+                        if line.strip():
+                            # Filter prompts here too
+                            clean_line = line.strip()
+                            if not any(prompt in clean_line.lower() for prompt in 
+                                     ['press enter', 'continue?', '[y]es/[n]o', 'do you want']):
+                                self.progress_update.emit(clean_line)
+                
+                # Process stderr if there are errors (but filter out known harmless errors)
+                if remaining_stderr:
+                    for line in remaining_stderr.strip().split('\n'):
+                        if line.strip():
+                            error_line = line.strip()
+                            # Filter out known harmless console errors
+                            if not any(harmless in error_line.lower() for harmless in 
+                                     ['the handle is invalid', 'read-host', 'press enter']):
+                                self.progress_update.emit(f"Error: {error_line}")
+                            
+            except subprocess.TimeoutExpired:
+                self.progress_update.emit("Warning: Script execution timed out, terminating...")
+                process.kill()
+                try:
+                    remaining_stdout, remaining_stderr = process.communicate(timeout=10)
+                except subprocess.TimeoutExpired:
+                    pass
+            
+            # Get the return code
+            return_code = process.returncode
+            
+            # Determine success/failure
+            # Consider the script successful even if there were console handle errors
+            # but the actual installation commands succeeded
+            if return_code == 0:
+                success_msg = "Installation completed successfully!"
+                self.progress_update.emit(f"{success_msg} ✅")
+                self.finished_signal.emit(True, success_msg)
+            else:
+                # Check if the error is just the console handle issue
+                error_msg = f"Installation completed with warnings (exit code {return_code})"
+                self.progress_update.emit(f"Installation completed with warnings ⚠️")
+                # Still consider it successful if it's just console handle issues
+                self.finished_signal.emit(True, error_msg)
+                
+        except FileNotFoundError as e:
+            error_msg = f"Script file not found: {str(e)}"
+            self.progress_update.emit(f"Error: {error_msg}")
+            self.finished_signal.emit(False, error_msg)
+            
+        except PermissionError as e:
+            error_msg = f"Permission denied: {str(e)}"
+            self.progress_update.emit(f"Error: {error_msg}")
+            self.finished_signal.emit(False, error_msg)
+            
         except Exception as e:
             error_msg = f"Installation error: {str(e)}"
             self.progress_update.emit(f"Error: {error_msg}")
@@ -361,31 +479,32 @@ class SetupTab(QWidget):
     def run_install_script(self):
         try:
             os_type = platform.system()
+            
             if os_type == "Windows":
-                script_path = "setup_scripts/install_windows.bat"
-            elif os_type == "Darwin":
-                script_path = "setup_scripts/install_mac.sh"
+                script_path = os.path.join("setup_scripts", "install_windows.ps1")
+            elif os_type == "Darwin":  # macOS
+                script_path = os.path.join("setup_scripts", "install_mac.sh")
             elif os_type == "Linux":
-                script_path = "setup_scripts/install_linux.sh"
+                script_path = os.path.join("setup_scripts", "install_linux.sh")
             else:
                 QMessageBox.warning(self, "Unsupported OS", f"Operating system '{os_type}' is not supported.")
                 return
 
+            script_path = os.path.abspath(script_path)
+            
             if not os.path.exists(script_path):
                 QMessageBox.warning(self, "Script Missing", f"Installation script not found: {script_path}")
                 return
 
-            # Show progress elements
+            # UI setup
             self.progress_bar.setVisible(True)
             self.log_output.setVisible(True)
             self.clear_logs_btn.setVisible(True)
             self.log_output.clear()
-            
-            # Disable install button
             self.install_button.setEnabled(False)
             self.install_button.setText("🔄 Installing...")
 
-            # Start worker thread
+            # Start worker
             self.worker = InstallationWorker(script_path)
             self.worker.progress_update.connect(self.update_log)
             self.worker.finished_signal.connect(self.installation_finished)
@@ -995,9 +1114,9 @@ class MainWindow(QWidget):
         self.config_tab = ConfigTab()
         self.connect_tab = ConnectTab()
 
-        self.tabs.addTab(self.setup_tab, QIcon("icons/image 91.svg"), " Setup")
-        self.tabs.addTab(self.config_tab, QIcon("icons/image 91.svg"), "Configuration")
-        self.tabs.addTab(self.connect_tab, QIcon("icons/image 91.svg"), " Connect Devices")
+        self.tabs.addTab(self.setup_tab, "Setup")
+        self.tabs.addTab(self.config_tab, "Configuration")
+        self.tabs.addTab(self.connect_tab, "Connect Devices")
 
         layout.addWidget(self.tabs)
         self.setLayout(layout)

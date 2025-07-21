@@ -25,7 +25,6 @@ dependencies = [
     "pydantic-ai-slim[groq]>=0.3.6",
     "pydantic-settings>=2.10.1",
     "pydub>=0.25.1",
-    "pyqt5>=5.15.0",
     "python-dateutil>=2.8.2",
     "python-dotenv>=1.0.0",
     "requests>=2.31.0",
