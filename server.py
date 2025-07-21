@@ -5,7 +5,7 @@ import subprocess
 import time
 from typing import Optional
 import threading
-
+import json
 import requests
 import uvicorn
 from dotenv import load_dotenv
@@ -17,7 +17,8 @@ from utils.logger import get_logger
 load_dotenv()
 PATH = os.getenv("EXCEL_FILE_PATH")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-AUTHRISED_USERS = os.getenv("ALLOWED_USERS")
+AUTHRISED_USERS = json.loads(os.getenv("ALLOWED_USERS"))
+
 
 app = FastAPI()
 logger = get_logger(__name__)
