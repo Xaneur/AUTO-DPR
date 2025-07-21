@@ -31,7 +31,6 @@ async def get_credentials():
         "AVAILABLE_SHEETS": get_available_sheets(PATH),
     }
 
-
 @app.post("/process")
 async def process_data(
     transcription: str,
