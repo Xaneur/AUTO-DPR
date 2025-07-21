@@ -33,11 +33,30 @@ def write_env(data: dict):
         for k, v in data.items():
             f.write(f"{k}={v}\n")
 
-
 class SetupTab(QWidget):
-    # unchanged...
-    pass
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        self.install_button = QPushButton("Installation")
+        self.install_button.clicked.connect(self.run_install_script)
+        layout.addWidget(self.install_button)
+        self.setLayout(layout)
 
+    def run_install_script(self):
+        os_type = platform.system()
+        if os_type == "Windows":
+            script_path = "setup_scripts/install_windows.bat"
+        elif os_type == "Darwin":
+            script_path = "setup_scripts/install_mac.sh"
+        else:
+            QMessageBox.warning(self, "Unsupported OS", f"{os_type} not supported.")
+            return
+
+        if os.path.exists(script_path):
+            subprocess.run(script_path, shell=True)
+            QMessageBox.information(self, "Installation", f"Ran script for {os_type}")
+        else:
+            QMessageBox.warning(self, "Script Missing", f"Script not found: {script_path}")
 
 class ConfigTab(QWidget):
     def __init__(self):
@@ -49,6 +68,8 @@ class ConfigTab(QWidget):
         env = read_env()
         self.ngrok_key = QLineEdit(env.get("NGROK_AUTH_TOKEN", ""))
         self.groq_key = QLineEdit(env.get("GROQ_API_KEY", ""))
+        self.name = QLineEdit(env.get("NAME", ""))
+        self.location = QLineEdit(env.get("LOCATION", ""))
         self.excel_path = QLineEdit(env.get("EXCEL_FILE_PATH", ""))
         self.excel_path.setReadOnly(True)
         self.excel_btn = QPushButton("Select Excel")
@@ -56,6 +77,8 @@ class ConfigTab(QWidget):
 
         form.addRow(QLabel("Ngrok Auth Token:"), self.ngrok_key)
         form.addRow(QLabel("GROQ API Key:"), self.groq_key)
+        form.addRow(QLabel("Name:"), self.name)
+        form.addRow(QLabel("Location:"), self.location)
         form.addRow(QLabel("Excel File Path:"), self.excel_path)
         form.addRow(self.excel_btn)
 
@@ -118,7 +141,9 @@ class ConfigTab(QWidget):
         # build env dict
         env_data = {
             "NGROK_AUTH_TOKEN": self.ngrok_key.text().strip(),
-            "GROQ_API_KEY": self.groq_key.text().strip(),    
+            "GROQ_API_KEY": self.groq_key.text().strip(),
+            "NAME": self.name.text().strip(),
+            "LOCATION": self.location.text().strip(),
             "EXCEL_FILE_PATH": self.excel_path.text().strip(),
             "ALLOWED_USERS": json.dumps(self.users)
         }

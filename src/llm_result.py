@@ -1,32 +1,46 @@
 """
-this is the file containing Tools & Dependency Injection Example using pydantic 
+this is the file containing Tools & Dependency Injection Example using pydantic
 """
 
 import asyncio
+from turtle import st
+
+from agno.agent import Agent
+from agno.models.groq import Groq
 from dotenv import load_dotenv
-from typing import Optional
 from pydantic import BaseModel, Field
 from src.prompt import prompt_builder
 from utils.logger import get_logger
-from agno.agent import Agent
-from agno.models.groq import Groq
 
 logger = get_logger(__name__)
 
 load_dotenv()
 
+
 class SupportResult(BaseModel):
-    found_descriptions_list: list[str] = Field(description="List of descriptions from search that are available in sheet data")
-    not_found_descriptions_list: list[str] = Field(description="List of descriptions from search that are NOT available in sheet data")
-    relevant_indexes: list[int] = Field(description="Indexes of found descriptions from the sheet data")
-    updated_quantity: list[float] = Field(description="Quantities of work done for found descriptions which is mentioned in the search description")
-    dates: list[str] = Field(default=[], description="List of date strings in DD-MM-YYYY format. Use current date if not specified. Current year is 2025.")
-    # remarks: list[str] = Field(default=[], description="List of remarks for each item")
-    conclution: str = Field(description="precise and small Conclution of the which search has found or which is't")
+    found_descriptions_list: list[str] = Field(
+        description="List of descriptions from search that are available in sheet data"
+    )
+    not_found_descriptions_list: list[str] = Field(
+        description="List of descriptions from search that are NOT available in sheet data"
+    )
+    relevant_indexes: list[int] = Field(
+        description="Indexes of found descriptions from the sheet data"
+    )
+    updated_quantity: list[float] = Field(
+        description="Quantities of work done for found descriptions which is mentioned in the search description"
+    )
+    dates: list[str] = Field(
+        default=[],
+        description="List of date strings in DD-MM-YYYY format. Use current date if not specified. Current year is 2025.",
+    )
+    conclution: str = Field(
+        description="precise and small Conclution of the which search has found or which is't"
+    )
 
 
 support_agent = Agent(
-    model = Groq(id = "meta-llama/llama-4-scout-17b-16e-instruct"),
+    model=Groq(id="meta-llama/llama-4-scout-17b-16e-instruct"),
     system_message="""
     You are a data extraction expert using ReAct (Reason + Act) methodology. 
     You MUST think step-by-step and validate each decision before acting.
@@ -64,24 +78,28 @@ support_agent = Agent(
     add_datetime_to_instructions=True,
 )
 
-    
 
-async def get_llm_result(search_description):
+async def get_llm_result(search_description, path: str, sheet_name: str):
     try:
-        prompt = prompt_builder(search_description) 
+        prompt = prompt_builder(search_description, path, sheet_name)
         response = support_agent.run(prompt)
         logger.info(f"response output is : {response.content}")
         return (
-            response.content.found_descriptions_list, 
-            response.content.not_found_descriptions_list, 
-            response.content.relevant_indexes, 
-            response.content.updated_quantity, 
+            response.content.found_descriptions_list,
+            response.content.not_found_descriptions_list,
+            response.content.relevant_indexes,
+            response.content.updated_quantity,
             response.content.dates,
-            response.content.conclution
+            response.content.conclution,
         )
     except Exception as e:
         logger.error(f"Error in get_llm_result: {e}")
         raise
 
-if __name__ == "__main__": 
-    asyncio.run(get_llm_result("25 kgs of structural steel work is done and 7 cubic meter galvanized work has been done at 25-07-2025"))
+
+if __name__ == "__main__":
+    asyncio.run(
+        get_llm_result(
+            "25 kgs of structural steel work is done and 7 cubic meter galvanized work has been done at 25-07-2025"
+        )
+    )

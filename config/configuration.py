@@ -20,10 +20,10 @@ LOG_DIR = ROOT_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
 # Paths for different operating systems
-if os.name == 'nt':  # Windows
-    CONFIG_DIR = os.path.join(os.environ.get('APPDATA'), 'dpr')
+if os.name == "nt":  # Windows
+    CONFIG_DIR = os.path.join(os.environ.get("APPDATA"), "dpr")
 else:  # Unix/Linux/macOS
-    CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.config', 'dpr')
+    CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "dpr")
 
 # Ensure config directory exists
 os.makedirs(CONFIG_DIR, exist_ok=True)

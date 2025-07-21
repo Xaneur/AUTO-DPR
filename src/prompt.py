@@ -1,9 +1,10 @@
-from config.configuration import FILE_PATH, SHEET_NAME
-from src.sheet_data_fetch import get_descriptions_with_index 
+from src.sheet_data_fetch import get_descriptions_with_index
 from utils.logger import get_logger
+
 logger = get_logger(__name__)
 
-def prompt_builder(search_description: str, path: str = FILE_PATH, sheet_name: str = SHEET_NAME):
+
+def prompt_builder(search_description: str, path: str, sheet_name: str):
     description_list = get_descriptions_with_index(path, sheet_name)
 
     PROMPT = f"""**REACT FRAMEWORK ANALYSIS**
@@ -111,10 +112,12 @@ Before generating final output, verify:
 
 """
 
-
     logger.info(f"prompt created with length: {len(PROMPT)}")
     return PROMPT
 
+
 if __name__ == "__main__":
-    prompt = prompt_builder("Excavation for foundation of all type of soil 1.5 mt to 3.0 mt depth")
+    prompt = prompt_builder(
+        "Excavation for foundation of all type of soil 1.5 mt to 3.0 mt depth"
+    )
     print(prompt)
