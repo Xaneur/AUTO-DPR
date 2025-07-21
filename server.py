@@ -33,6 +33,7 @@ app.add_middleware(
 # Global variable to store ngrok URL
 ngrok_url = None
 
+
 @app.get("/get_credentials")
 async def get_credentials():
     return {
@@ -56,6 +57,7 @@ async def process_data(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/get_history")
 async def get_history_data(name: Optional[str] = "", location: Optional[str] = ""):
