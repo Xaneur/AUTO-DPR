@@ -4,6 +4,7 @@ import re
 import subprocess
 import time
 from typing import Optional
+import threading
 
 import requests
 import uvicorn
@@ -20,15 +21,6 @@ AUTHRISED_USERS = os.getenv("ALLOWED_USERS")
 
 app = FastAPI()
 logger = get_logger(__name__)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Your frontend URL
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-)
 
 # Global variable to store ngrok URL
 ngrok_url = None

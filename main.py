@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QFrame, QGridLayout
 )
 from PyQt5.QtCore import QProcess, Qt, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import QTextCursor, QFont, QPalette, QColor, QFontDatabase
+from PyQt5.QtGui import QTextCursor, QFont, QPalette, QColor, QFontDatabase, QIcon
 
 from validation.api_validator import is_ngrok_authtoken_valid, is_groq_key_valid
 
@@ -995,9 +995,9 @@ class MainWindow(QWidget):
         self.config_tab = ConfigTab()
         self.connect_tab = ConnectTab()
 
-        self.tabs.addTab(self.setup_tab, "🔧 Setup")
-        self.tabs.addTab(self.config_tab, "⚙️ Configuration")
-        self.tabs.addTab(self.connect_tab, "🔗 Connect Devices")
+        self.tabs.addTab(self.setup_tab, QIcon("icons/image 91.svg"), " Setup")
+        self.tabs.addTab(self.config_tab, QIcon("icons/image 91.svg"), "Configuration")
+        self.tabs.addTab(self.connect_tab, QIcon("icons/image 91.svg"), " Connect Devices")
 
         layout.addWidget(self.tabs)
         self.setLayout(layout)
