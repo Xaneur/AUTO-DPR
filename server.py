@@ -14,11 +14,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.main import updated_quantity_in_sheet
 from src.sheet_data_fetch import get_available_sheets, get_history
 from utils.logger import get_logger
+from utils.paths import resource_path
 
 load_dotenv()
-PATH = os.getenv("EXCEL_FILE_PATH")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-AUTHRISED_USERS = json.loads(os.getenv("ALLOWED_USERS"))
+PATH = resource_path(os.getenv("EXCEL_FILE_PATH"))
+GROQ_API_KEY = resource_path(os.getenv("GROQ_API_KEY"))
+AUTHRISED_USERS = json.loads(resource_path(os.getenv("ALLOWED_USERS")))
 
 
 app = FastAPI()

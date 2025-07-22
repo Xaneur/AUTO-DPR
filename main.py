@@ -6,6 +6,8 @@ import json
 import subprocess
 import webbrowser
 import time
+from PyQt5.QtCore import QProcess
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QTabWidget, QVBoxLayout, QPushButton, QFileDialog,
     QLineEdit, QLabel, QFormLayout, QMessageBox, QProgressBar, QTextEdit, QHBoxLayout,
@@ -16,8 +18,9 @@ from PyQt5.QtCore import QProcess, Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QTextCursor, QFont, QPalette, QColor, QFontDatabase
 
 from validation.api_validator import is_ngrok_authtoken_valid, is_groq_key_valid
+from utils.paths import resource_path
 
-ENV_FILE = ".env"
+ENV_FILE = resource_path(".env")
 
 # Enhanced styling with system fonts
 STYLE_SHEET = """
@@ -479,21 +482,14 @@ class SetupTab(QWidget):
     def run_install_script(self):
         try:
             os_type = platform.system()
-            
             if os_type == "Windows":
-                script_path = os.path.join("setup_scripts", "install_windows.ps1")
+                script_path = resource_path(os.path.join("setup_scripts", "install_windows.ps1"))
             elif os_type == "Darwin":  # macOS
-                script_path = os.path.join("setup_scripts", "install_mac.sh")
+                script_path = resource_path(os.path.join("setup_scripts", "install_mac.sh"))
             elif os_type == "Linux":
-                script_path = os.path.join("setup_scripts", "install_linux.sh")
+                script_path = resource_path(os.path.join("setup_scripts", "install_linux.sh"))
             else:
                 QMessageBox.warning(self, "Unsupported OS", f"Operating system '{os_type}' is not supported.")
-                return
-
-            script_path = os.path.abspath(script_path)
-            
-            if not os.path.exists(script_path):
-                QMessageBox.warning(self, "Script Missing", f"Installation script not found: {script_path}")
                 return
 
             # UI setup
@@ -1020,26 +1016,23 @@ class ConnectTab(QWidget):
         else:
             QMessageBox.warning(self, "No Password", "No password available to copy.")
 
+
     def start_server(self):
-        """Start the server process"""
-        if not os.path.exists("server.py"):
-            QMessageBox.warning(self, "Server Not Found", "server.py file not found in the current directory.")
-            return
+        try: 
+            server_exe = os.path.join(os.path.dirname(sys.executable), "DPR-AI-Server")
+            if not os.path.exists(server_exe):
+                QMessageBox.warning(self, "Server Not Found", f"Server executable not found at: {server_exe}")
+                return
 
-        self.log_output.clear()
-        self.pwd_field.clear()
+            self.log_output.clear()
+            self.pwd_field.clear()
 
-        self.process = QProcess(self)
-        self.process.setProcessChannelMode(QProcess.MergedChannels)
-        self.process.readyReadStandardOutput.connect(self.handle_server_output)
-        self.process.finished.connect(self.handle_finished)
+            self.process = QProcess(self)
+            self.process.setProcessChannelMode(QProcess.MergedChannels)
+            self.process.readyReadStandardOutput.connect(self.handle_server_output)
+            self.process.finished.connect(self.handle_finished)
 
-        program = sys.executable
-        args = ["server.py"]
-        
-        try:
-            self.process.start(program, args)
-            
+            self.process.start(server_exe)
             self.start_button.setEnabled(False)
             self.stop_button.setEnabled(True)
             self.status_label.setText("🟡 Status: Starting...")
