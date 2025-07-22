@@ -10,6 +10,7 @@ import requests
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from src.main import updated_quantity_in_sheet
 from src.sheet_data_fetch import get_available_sheets, get_history
 from utils.logger import get_logger
@@ -23,9 +24,25 @@ AUTHRISED_USERS = json.loads(os.getenv("ALLOWED_USERS"))
 app = FastAPI()
 logger = get_logger(__name__)
 
+# Configure CORS with explicit methods and headers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+    expose_headers=["*"],  # Expose all headers
+    max_age=600,  # Cache preflight response for 10 minutes
+)
+
 # Global variable to store ngrok URL
 ngrok_url = None
 
+
+# Add OPTIONS handler for CORS preflight
+@app.options("/get_credentials", response_model=dict)
+async def options_get_credentials():
+    return {}
 
 @app.get("/get_credentials")
 async def get_credentials():
@@ -34,6 +51,10 @@ async def get_credentials():
         "AVAILABLE_SHEETS": get_available_sheets(PATH),
         "AUTHRISED_USERS": AUTHRISED_USERS
     }
+
+@app.options("/process", response_model=dict)
+async def options_process():
+    return {}
 
 @app.post("/process")
 async def process_data(
@@ -51,6 +72,10 @@ async def process_data(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.options("/get_history", response_model=dict)
+async def options_get_history():
+    return {}
 
 @app.post("/get_history")
 async def get_history_data(name: Optional[str] = "", location: Optional[str] = ""):
