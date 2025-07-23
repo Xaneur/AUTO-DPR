@@ -1,47 +1,32 @@
-import logging
 import os
 import re
-import subprocess
-import time
 from typing import Optional
-import threading
 import json
-import requests
+from PyQt5.QtCore import flush
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from platformdirs import user_config_dir
 from src.main import updated_quantity_in_sheet
 from src.sheet_data_fetch import get_available_sheets, get_history
 from utils.logger import get_logger
 from pyngrok import ngrok, conf
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pyngrok import ngrok, conf
+import atexit
+
 
 load_dotenv()
-# PATH = resource_path(os.getenv("EXCEL_FILE_PATH"))
-# GROQ_API_KEY = (os.getenv("GROQ_API_KEY"))
-# AUTHRISED_USERS = json.loads((os.getenv("ALLOWED_USERS")))
+PATH = os.getenv("EXCEL_FILE_PATH")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+NGROK_AUTH_TOKEN = os.getenv("NGROK_AUTH_TOKEN")
+AUTHRISED_USERS = json.loads(os.getenv("ALLOWED_USERS"))
 
-APP_NAME = "DPR-AI"
-CONFIG_DIR = user_config_dir(APP_NAME)
-ENV_FILE = os.path.join(CONFIG_DIR, ".env")
+tunnel = None 
 
 # Initialize logger before any usage
 logger = get_logger(__name__)
-
-# Load .env from the user config directory
-load_dotenv(dotenv_path=ENV_FILE)
-
-# Get EXCEL_FILE_PATH and validate it
-excel_file_path = os.getenv("EXCEL_FILE_PATH")
-if excel_file_path is None or excel_file_path.strip() == "":
-    logger.error("EXCEL_FILE_PATH is not set in the .env file. Please configure it in the GUI.")
-    print("ERROR: Excel file path is not configured. Please run the DPR-AI application and set the Excel file path in the Configuration tab.", flush=True)
-    # Set a placeholder to prevent crashes, though functionality will be limited
-    PATH = ""
-else:
-    # Since EXCEL_FILE_PATH is an absolute path from the GUI, use it directly
-    PATH = excel_file_path
 
 app = FastAPI()
 
@@ -104,56 +89,50 @@ async def get_history_data(name: Optional[str] = "", location: Optional[str] = "
     return get_history(PATH, name, location)
 
 
-def get_ngrok_url_from_api():
-    """Get ngrok URL from the local API"""
-    try:
-        response = requests.get("http://localhost:4040/api/tunnels")
-        if response.status_code == 200:
-            tunnels = response.json()
-            for tunnel in tunnels.get("tunnels", []):
-                if tunnel.get("proto") == "https":
-                    return tunnel.get("public_url")
-    except Exception as e:
-        logger.error(f"Error getting ngrok URL from API: {e}")
-    return None
-
-
-from pyngrok import ngrok, conf
-
-def start_ngrok(port: int = 8000, authtoken: Optional[str] = "2xiK1xyNghtbbCpMgq2YPycQey5_5UfqRmx2JiD8p1jRrNv51"):
-    global ngrok_url
+def start_ngrok_and_print_password(port: int = 8000, authtoken: Optional[str] = None):
+    global ngrok_url, tunnel
 
     try:
-        # Optional: Set authtoken if you have one
         if authtoken:
             conf.get_default().auth_token = authtoken
 
-        # Kill any previous tunnels just in case
         ngrok.kill()
-
-        # Start a new HTTPS tunnel
         tunnel = ngrok.connect(port, bind_tls=True)
         ngrok_url = tunnel.public_url
 
-        print(f"ngrok tunnel started at: {ngrok_url}", flush=True)
         logger.info(f"ngrok tunnel started at: {ngrok_url}")
 
-        # Extract and display APP PASSWORD from URL
         match = re.search(r"https://([a-zA-Z0-9]+)\.ngrok(-free)?\.app", ngrok_url)
         if match:
-            print(f"APP PASSWORD: {match.group(1)}", flush=True)
-            logger.info(f"APP PASSWORD: {match.group(1)}")
+            app_password = match.group(1)
+            logger.info(f"APP PASSWORD: {app_password}")
+            print(f"APP PASSWORD: {app_password}", flush=True)
         else:
             logger.warning("Couldn't extract APP PASSWORD from ngrok URL.")
-
     except Exception as e:
         logger.error(f"Error starting ngrok: {e}")
 
 
+def stop_ngrok():
+    global tunnel
+    try:
+        if tunnel:
+            ngrok.disconnect(tunnel.public_url)
+            tunnel = None
+        ngrok.kill()
+        logger.info("ngrok tunnel stopped.")
+    except Exception as e:
+        logger.error(f"Error stopping ngrok: {e}")
+
+
+def main():
+    start_ngrok_and_print_password(port=8000, authtoken=NGROK_AUTH_TOKEN)
+
+    try:
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+    finally:
+        stop_ngrok()
+
 
 if __name__ == "__main__":
-
-    ngrok_thread = threading.Thread(target=start_ngrok, daemon=True)
-    ngrok_thread.start()
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    main()

@@ -17,7 +17,8 @@ import os
 import tempfile
 import threading
 from typing import Dict, Any
-
+from pyngrok import ngrok, agent, conf
+from pyngrok.exception import PyngrokNgrokHTTPError, PyngrokError
 
 def is_groq_key_valid(key) -> bool:
     """Return True if the GROQ_API_KEY is valid, else False."""
@@ -64,5 +65,8 @@ def is_ngrok_authtoken_valid(token: str, config_path: str = None) -> bool:
 
 if __name__ == "__main__":
 
-    print(is_ngrok_authtoken_valid())
+    from dotenv import load_dotenv 
+    load_dotenv()
+    path = os.environ.get("NGROK_AUTH_TOKEN")
+    print(is_ngrok_authtoken_valid(path))
     # print(is_groq_key_valid())
