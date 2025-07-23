@@ -653,6 +653,7 @@ dependencies = [
     { name = "pydantic-ai-slim", extra = ["groq"] },
     { name = "pydantic-settings" },
     { name = "pydub" },
+    { name = "pyngrok" },
     { name = "python-dateutil" },
     { name = "python-dotenv" },
     { name = "requests" },
@@ -687,6 +688,7 @@ requires-dist = [
     { name = "pydantic-ai-slim", extras = ["groq"], specifier = ">=0.3.6" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
     { name = "pydub", specifier = ">=0.25.1" },
+    { name = "pyngrok", specifier = ">=7.2.12" },
     { name = "python-dateutil", specifier = ">=2.8.2" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "requests", specifier = ">=2.31.0" },
@@ -2662,6 +2664,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1a/0a/c06b542ac108bfc73200677309cd9188a3a01b127a63f20cadc18d873d88/pymdown_extensions-10.16.tar.gz", hash = "sha256:71dac4fca63fabeffd3eb9038b756161a33ec6e8d230853d3cecf562155ab3de", size = 853197, upload-time = "2025-06-21T17:56:36.974Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/98/d4/10bb14004d3c792811e05e21b5e5dcae805aacb739bd12a0540967b99592/pymdown_extensions-10.16-py3-none-any.whl", hash = "sha256:f5dd064a4db588cb2d95229fc4ee63a1b16cc8b4d0e6145c0899ed8723da1df2", size = 266143, upload-time = "2025-06-21T17:56:35.356Z" },
+]
+
+[[package]]
+name = "pyngrok"
+version = "7.2.12"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/64/7a/6f96513de7cadd81858b4e2bb8a31052b552cb21baeec305a5d0cac94a25/pyngrok-7.2.12.tar.gz", hash = "sha256:1cce4d785619b8064bca7e6f6c8a3454d69aaa5fcff0f35bd05aa81254ce12ff", size = 45075, upload-time = "2025-07-09T19:17:54.391Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/81/121c612fed8c247e7703cfcc5c3a04389a575e95bacbc316c0d371eb6757/pyngrok-7.2.12-py3-none-any.whl", hash = "sha256:a32c3146214e5a693b809e7cea705e29343050fee7047195f50244f4b8ba11e3", size = 26049, upload-time = "2025-07-09T19:17:53.145Z" },
 ]
 
 [[package]]

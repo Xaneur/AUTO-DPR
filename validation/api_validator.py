@@ -33,191 +33,33 @@ def is_groq_key_valid(key) -> bool:
     except (APIStatusError, APIConnectionError):
         return False
 
-
-def validate_ngrok_authtoken_real(token: str, timeout: int = 10) -> Dict[str, Any]:
+def is_ngrok_authtoken_valid(token: str, config_path: str = None) -> bool:
     """
-    Validates ngrok authtoken by actually testing it with ngrok commands.
-    
+    Validate an ngrok auth token using pyngrok.
+
     Args:
-        token (str): The authtoken to validate
-        timeout (int): Timeout in seconds for the validation test
-        
+        token: ngrok auth token (string).
+        config_path: optional path to ngrok config file.
+
     Returns:
-        dict: {
-            'valid': bool,
-            'error': str or None,
-            'method': str (how validation was performed)
-        }
+        True if token is valid (agent status reachable), False otherwise.
     """
-    
-    if not token or not isinstance(token, str):
-        return {
-            'valid': False,
-            'error': 'Token is empty or not a string',
-            'method': 'input_validation'
-        }
-    
-    token = token.strip()
-    
-    # Method 1: Try to set the authtoken and test with a quick command
+    cfg = conf.PyngrokConfig()
+    if config_path:
+        cfg.config_path = config_path
+
     try:
-        # First, try to configure the authtoken
-        config_result = subprocess.run(
-            ['ngrok', 'config', 'add-authtoken', token],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-        
-        if config_result.returncode != 0:
-            return {
-                'valid': False,
-                'error': f'Failed to set authtoken: {config_result.stderr}',
-                'method': 'config_command'
-            }
-        
-        # Method 2: Try to get account info (quick validation)
-        try:
-            account_result = subprocess.run(
-                ['ngrok', 'api', 'credentials', 'list'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            
-            if account_result.returncode == 0:
-                return {
-                    'valid': True,
-                    'error': None,
-                    'method': 'api_credentials'
-                }
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-            pass  # Try next method
-        
-        # Method 3: Try to start a tunnel briefly to test authentication
-        return _test_tunnel_authentication(token, timeout)
-        
-    except subprocess.TimeoutExpired:
-        return {
-            'valid': False,
-            'error': 'Timeout while configuring authtoken',
-            'method': 'config_timeout'
-        }
-    except FileNotFoundError:
-        return {
-            'valid': False,
-            'error': 'ngrok command not found. Please install ngrok first.',
-            'method': 'ngrok_not_found'
-        }
-    except Exception as e:
-        return {
-            'valid': False,
-            'error': f'Unexpected error: {str(e)}',
-            'method': 'exception'
-        }
+        # Set and persist the token
+        ngrok.set_auth_token(token, pyngrok_config=cfg)  # :contentReference[oaicite:1]{index=1}
 
-def _test_tunnel_authentication(token: str, timeout: int) -> Dict[str, Any]:
-    """
-    Test authentication by attempting to start a tunnel briefly.
-    """
-    tunnel_process = None
-    try:
-        # Try to start ngrok with a high port (likely unused)
-        tunnel_process = subprocess.Popen(
-            ['ngrok', 'http', '65432'],  # High port number, likely unused
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        # Wait a bit for ngrok to start and authenticate
-        time.sleep(3)
-        
-        # Check if process is still running (good sign)
-        if tunnel_process.poll() is None:
-            # Process is running, likely authenticated successfully
-            tunnel_process.terminate()
-            tunnel_process.wait(timeout=2)
-            return {
-                'valid': True,
-                'error': None,
-                'method': 'tunnel_test'
-            }
-        else:
-            # Process terminated, check output for errors
-            stdout, stderr = tunnel_process.communicate()
-            
-            # Check for authentication errors
-            combined_output = (stdout + stderr).lower()
-            if 'authentication failed' in combined_output or 'authtoken' in combined_output:
-                return {
-                    'valid': False,
-                    'error': 'Authentication failed - invalid authtoken',
-                    'method': 'tunnel_auth_error'
-                }
-            else:
-                # Some other error, but not necessarily auth-related
-                return {
-                    'valid': True,  # Assume valid if no auth error
-                    'error': None,
-                    'method': 'tunnel_other_error'
-                }
-                
-    except Exception as e:
-        return {
-            'valid': False,
-            'error': f'Error testing tunnel: {str(e)}',
-            'method': 'tunnel_exception'
-        }
-    finally:
-        # Clean up process if still running
-        if tunnel_process and tunnel_process.poll() is None:
-            try:
-                tunnel_process.terminate()
-                tunnel_process.wait(timeout=2)
-            except:
-                tunnel_process.kill()
+        # Attempt a harmless API call to verify it works
+        _ = agent.get_agent_status(pyngrok_config=cfg)  # requires valid token :contentReference[oaicite:2]{index=2}
 
-def is_ngrok_authtoken_valid(token) -> bool:
-    """
-    Simple boolean function to check if ngrok authtoken is valid.
-    
-    Args:
-        token (str): The authtoken to validate
-        
-    Returns:
-        bool: True if valid, False otherwise
-    """
+        return True
 
-    if not token: 
+    except (PyngrokNgrokHTTPError, PyngrokError):
+        # Happens when auth fails or agent isn't reachable
         return False
-    
-    result = validate_ngrok_authtoken_real(token)
-
-    if result['valid']:
-        validate_and_setup_ngrok(token)
-    return result['valid']
-
-# Advanced usage with custom validation
-def validate_and_setup_ngrok(token: str) -> Dict[str, Any]:
-    """
-    Validates token and sets it up if valid.
-    
-    Returns:
-        dict: Validation result with setup status
-    """
-    validation = validate_ngrok_authtoken_real(token)
-    
-    if validation['valid']:
-        try:
-            # If valid, ensure it's properly configured
-            subprocess.run(['ngrok', 'config', 'add-authtoken', token], 
-                         capture_output=True, check=True)
-            validation['setup_complete'] = True
-        except subprocess.CalledProcessError:
-            validation['setup_complete'] = False
-    
-    return validation
 
 
 if __name__ == "__main__":

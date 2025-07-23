@@ -11,18 +11,39 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from platformdirs import user_config_dir
 from src.main import updated_quantity_in_sheet
 from src.sheet_data_fetch import get_available_sheets, get_history
 from utils.logger import get_logger
+from pyngrok import ngrok, conf
 
 load_dotenv()
-PATH = os.getenv("EXCEL_FILE_PATH")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-AUTHRISED_USERS = json.loads(os.getenv("ALLOWED_USERS"))
+# PATH = resource_path(os.getenv("EXCEL_FILE_PATH"))
+# GROQ_API_KEY = (os.getenv("GROQ_API_KEY"))
+# AUTHRISED_USERS = json.loads((os.getenv("ALLOWED_USERS")))
 
+APP_NAME = "DPR-AI"
+CONFIG_DIR = user_config_dir(APP_NAME)
+ENV_FILE = os.path.join(CONFIG_DIR, ".env")
+
+# Initialize logger before any usage
+logger = get_logger(__name__)
+
+# Load .env from the user config directory
+load_dotenv(dotenv_path=ENV_FILE)
+
+# Get EXCEL_FILE_PATH and validate it
+excel_file_path = os.getenv("EXCEL_FILE_PATH")
+if excel_file_path is None or excel_file_path.strip() == "":
+    logger.error("EXCEL_FILE_PATH is not set in the .env file. Please configure it in the GUI.")
+    print("ERROR: Excel file path is not configured. Please run the DPR-AI application and set the Excel file path in the Configuration tab.", flush=True)
+    # Set a placeholder to prevent crashes, though functionality will be limited
+    PATH = ""
+else:
+    # Since EXCEL_FILE_PATH is an absolute path from the GUI, use it directly
+    PATH = excel_file_path
 
 app = FastAPI()
-logger = get_logger(__name__)
 
 # Configure CORS with explicit methods and headers
 app.add_middleware(
@@ -97,35 +118,37 @@ def get_ngrok_url_from_api():
     return None
 
 
-def start_ngrok():
+from pyngrok import ngrok, conf
+
+def start_ngrok(port: int = 8000, authtoken: Optional[str] = "2xiK1xyNghtbbCpMgq2YPycQey5_5UfqRmx2JiD8p1jRrNv51"):
     global ngrok_url
+
     try:
-        time.sleep(2)
-        # Start ngrok process
-        process = subprocess.Popen(
-            ["ngrok", "http", "8000"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
+        # Optional: Set authtoken if you have one
+        if authtoken:
+            conf.get_default().auth_token = authtoken
 
-        # Wait a bit for ngrok to start
-        time.sleep(5)
+        # Kill any previous tunnels just in case
+        ngrok.kill()
 
-        # Get URL from ngrok API
-        ngrok_url = get_ngrok_url_from_api()
-        pattern = re.compile(r"https://([a-zA-Z0-9]+)\.ngrok-free\.app")
-        m = pattern.search(ngrok_url)
-        if m:
-            print(f"APP PASSWORD: {m.group(1)}", flush=True)
-            logging.info(f"APP PASSWORD: {m.group(1)}")
+        # Start a new HTTPS tunnel
+        tunnel = ngrok.connect(port, bind_tls=True)
+        ngrok_url = tunnel.public_url
+
+        print(f"ngrok tunnel started at: {ngrok_url}", flush=True)
+        logger.info(f"ngrok tunnel started at: {ngrok_url}")
+
+        # Extract and display APP PASSWORD from URL
+        match = re.search(r"https://([a-zA-Z0-9]+)\.ngrok(-free)?\.app", ngrok_url)
+        if match:
+            print(f"APP PASSWORD: {match.group(1)}", flush=True)
+            logger.info(f"APP PASSWORD: {match.group(1)}")
         else:
-            logger.error("Failed to get ngrok URL")
-
-        process.wait()
+            logger.warning("Couldn't extract APP PASSWORD from ngrok URL.")
 
     except Exception as e:
         logger.error(f"Error starting ngrok: {e}")
+
 
 
 if __name__ == "__main__":
